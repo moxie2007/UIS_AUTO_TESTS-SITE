@@ -12,7 +12,7 @@ from testrail import *
 
 # driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS)
 
-tools = tools.uisTools()
+tools = tools.Uis_tools()
 
 # user = 23
 # timeOut = 30

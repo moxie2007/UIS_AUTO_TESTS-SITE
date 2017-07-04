@@ -16,8 +16,15 @@ from testrail import *
 
 
 lk_elements  = pageElements.LK()
+class Use_config():
+	def __init__(self, path_to_file):
+		self.path_to_file = 'C:\Users\i.kuznetsov\Documents'
 
-class uisTools(object):
+	def get_parametr(self):
+	""" метод достающий конкретный параметр""" 
+		pass
+
+class Uis_tools(object):
 	def __init__(self):
 		self.driver = None
 		# self.client = None
@@ -30,11 +37,10 @@ class uisTools(object):
 				client.password = None
 				return self.client
 			except Exception as ex:
-				# print(ex)
 				loger.file_log(text = 'Did not initialization testrail' , text_type = 'ERROR  ')
 
 	def init_browser(self, product_type = 'Chrome'):
-	# открывает объект Браузера
+	""" открывает объект Браузера """
 		try:
 			self.driver = webdriver.Firefox()
 			self.driver.maximize_window()
@@ -44,13 +50,13 @@ class uisTools(object):
 			loger.file_log(text = 'Did not initialization Browser' , text_type = 'ERROR  ')
 
 	def close_browser(self):
-	# закрывает открытый объект Браузера
+	""" закрывает открытый объект Браузера """
 		if self.driver:
 			self.driver.quit()
 			self.driver = None
 
 	def goto(self, url = None, breakONerror = False):
-	# осуществляет переход по URL
+	""" осуществляет переход по URL """
 		driver = self.driver
 		self.url = url
 		self.breakONerror = breakONerror
@@ -62,7 +68,7 @@ class uisTools(object):
 				self.abort_test()
 
 	def element_is(self, element_definition = None):
-		# проверяет наличие определенного элемента на странице
+		""" проверяет наличие определенного элемента на странице """
 			self.element = None
 			driver = self.driver
 			try:
