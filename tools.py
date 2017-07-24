@@ -4,6 +4,9 @@ from time import gmtime, strftime
 import datetime
 from datetime import datetime
 import os, sys, codecs, sqlite3, re
+
+from xml.etree import ElementTree as etree
+
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
@@ -14,21 +17,53 @@ import loger
 from loger import Loger as loger
 from testrail import *
 
-
 lk_elements  = pageElements.LK()
-class Use_config():
-	def __init__(self, path_to_file):
-		self.path_to_file = 'C:\Users\i.kuznetsov\Documents'
 
-	def get_parametr(self):
-	""" метод достающий конкретный параметр""" 
-		pass
+class Use_config():
+	def __init__(self):
+		self.env = "lk"
+
+	def set_lk_parametrs(self, path_to_file = 'C:\\CONFIG\\'):
+		""" в этом методе читается конфигурационный файл и настройки
+		передаются в класс настроек """
+		config_file = str(path_to_file) + "uis_autotests.xml"
+		try:
+			app_xml = etree.parse(config_file)
+			root = app_xml.getroot()
+			platfom = {}
+			try:
+				for neighbor in root.iter('LK'):
+					# так как значение параметра одно порядок значения не имеет, но если значений будет много, НУЖНО будет внести изменения в код
+					for index in neighbor.attrib.values():
+						for second_index in neighbor.attrib.keys():
+							platfom[second_index] = str(index)
+			except Exception as ex:
+				pass
+			self.url = platfom.get("url")
+			self.user_name = platfom.get("user")
+			self.password = platfom.get("password")
+		except Exception as ex:
+			pass
+		return self.url, self.user_name, self.password
+	
+	@property
+	def get_login_url(self):
+		return self.url
+	
+	@property
+	def get_user_name(self):
+		return self.user_name
+	
+	@property
+	def get_pass(self):
+		return self.password
 
 class Uis_tools(object):
 	def __init__(self):
 		self.driver = None
 		# self.client = None
 	
+
 	def init_testrail(self):
 			try:
 				client = APIClient('http://testrail.uiscom.ru/')
@@ -40,7 +75,7 @@ class Uis_tools(object):
 				loger.file_log(text = 'Did not initialization testrail' , text_type = 'ERROR  ')
 
 	def init_browser(self, product_type = 'Chrome'):
-	""" открывает объект Браузера """
+		""" открывает объект Браузера """
 		try:
 			self.driver = webdriver.Firefox()
 			self.driver.maximize_window()
@@ -50,18 +85,31 @@ class Uis_tools(object):
 			loger.file_log(text = 'Did not initialization Browser' , text_type = 'ERROR  ')
 
 	def close_browser(self):
-	""" закрывает открытый объект Браузера """
+		""" закрывает открытый объект Браузера """
 		if self.driver:
 			self.driver.quit()
 			self.driver = None
 
 	def goto(self, url = None, breakONerror = False):
-	""" осуществляет переход по URL """
+		""" осуществляет переход по URL """
 		driver = self.driver
 		self.url = url
 		self.breakONerror = breakONerror
+		
 		try:
-			driver.get(self.url)
+			driver.delete_all_cookies()
+		except Exception as ex:
+			ptint(ex)
+		print(driver.get_cookies())
+		
+		try:
+			# print(url)
+			print(url)
+			time.sleep(10)
+			driver.get(url)
+			time.sleep(10)
+			driver.get(url)
+			time.sleep(10)
 		except Exception as ex:
 			loger.file_log(text = 'can not open URL. URL = ' + str(self.url) , text_type = 'ERROR  ')
 			if self.breakONerror == True:
@@ -69,33 +117,33 @@ class Uis_tools(object):
 
 	def element_is(self, element_definition = None):
 		""" проверяет наличие определенного элемента на странице """
-			self.element = None
-			driver = self.driver
-			try:
-				self.element = driver.find_element_by_id(element_definition[0])
-				return self.element
-			except:
-				pass
-			try:
-				self.element = driver.find_element_by_css_selector(element_definition[0])
-				return self.element
-			except:
-				pass
-			try:
-				self.element = driver.find_element_by_link_text(element_definition[0])
-				return self.element
-			except:
-				pass
-			try:
-				self.element = driver.find_element_by_xpath(element_definition[0])
-				return self.element
-			except:
-				pass
-			if self.element == None:
-				return None
+		self.element = None
+		driver = self.driver
+		try:
+			self.element = driver.find_element_by_id(element_definition[0])
+			return self.element
+		except:
+			pass
+		try:
+			self.element = driver.find_element_by_css_selector(element_definition[0])
+			return self.element
+		except:
+			pass
+		try:
+			self.element = driver.find_element_by_link_text(element_definition[0])
+			return self.element
+		except:
+			pass
+		try:
+			self.element = driver.find_element_by_xpath(element_definition[0])
+			return self.element
+		except:
+			pass
+		if self.element == None:
+			return None
 	
 	def page_is(self, element_definition = None):
-	# проверяет отображение страницы для определённого эллемента
+		# проверяет отображение страницы для определённого эллемента
 		self.element = None
 		driver = self.driver
 		try:
@@ -117,32 +165,31 @@ class Uis_tools(object):
 			return None # проверяет наличие определенной страницы
 	
 	def displayed_element(self, element_definition, timeOut = 10):
-	# проверяет наличие (видимость) определенного элемента на странице
+		# проверяет наличие (видимость) определенного элемента на странице
 		driver = self.driver
-		element = None
+		desired_element = None
+		# element = None
 		state = False
 		elementTyte = None
 		step = 1
 		while step <= timeOut:
 			try:
-				if self.element_is(element_definition).is_displayed() is True:
-					if self.page_is(element_definition).is_displayed() is True or None:
-						# проверка которая определяет отображен искомый объект на всплывающем окне или нет
-						state = True
-						try:
-							elementTyte = self.element_is(element_definition).tag_name
-						except:
-							pass
-						element = self.element_is(element_definition)
-						break
+				desired_element = self.element_is(element_definition)
+				if desired_element.is_displayed() is True:
+					state = True
+					try:
+						elementTyte = self.element_is(element_definition).tag_name
+					except Exception as ex:
+						pass
+					break
 			except Exception as ex:
 				pass
-			step += 0.5
+			step += 1
 			time.sleep(1)
-		return [state, elementTyte, element]	
+		return [state, elementTyte, desired_element]	
 	
 	def elements_list (self, object_type = 'div', search_type = 'contains', mask = 'li',  timeOut = 10):
-	# создает список эллементов по определенной маске, возвращает количество найденных эллементов и сами эллементы в виде готовывых объектов
+		# создает список эллементов по определенной маске, возвращает количество найденных эллементов и сами эллементы в виде готовывых объектов
 		result = [None,[None,None]]
 		driver = self.driver
 		step = 1
@@ -159,20 +206,20 @@ class Uis_tools(object):
 				pass
 			step += 0.5
 			time.sleep(1)
-
 		return result
 	
 	def abort_test(self):
-	# корректное прерывание теста
+		# корректное прерывание теста
 		self.close_browser()
 		loger.file_log(text = "Finish sanity test with Error's", text_type = 'SUCCESS')
 		sys.exit()
 	
 	def click_element(self, element_definition, breakONerror = False, timeOut = 120):
-	# выполняет нажатие на эллемент
+		# выполняет нажатие на эллемент
 		try:
-			if self.displayed_element(element_definition = element_definition, timeOut = timeOut)[0] is True:
-				self.element_is(element_definition = element_definition).click()
+			current_object = self.displayed_element(element_definition = element_definition, timeOut = timeOut)
+			if current_object[0] is True:
+				current_object[2].click()
 			else:
 				loger.file_log(text = 'can not click ' + str(element_definition) , text_type = 'ERROR  ')
 				if self.breakONerror == True:
@@ -182,18 +229,14 @@ class Uis_tools(object):
 			if self.breakONerror == True:
 				self.abort_test()
 	
-	def change_value(self, element_definition, text, breakONerror = False, confirmType = True):
-	# выполняет изменение значения в эллементе
+	def change_value(self, element_definition, text, breakONerror = False):
+		# выполняет изменение значения в эллементе (пока, без перемещения курсора к эллементу)
 		try:
-			if self.displayed_element(element_definition = element_definition)[0] is True:
-				current_object = self.element_is(element_definition = element_definition)
-				current_object.click()
-				current_object.clear()
-				current_object.send_keys(str(text))
-				if confirmType == True:
-					self.page_is(element_definition = element_definition).click()
-				else:
-					pass
+			current_object = self.displayed_element(element_definition = element_definition)
+			if current_object[0] is True:
+				current_object[2].click()
+				current_object[2].clear()
+				current_object[2].send_keys(str(text))
 		except Exception as ex:
 			print(ex)
 			loger.file_log(text = 'can not change data in the element ' + str(element_definition) , text_type = 'ERROR  ')
@@ -201,7 +244,7 @@ class Uis_tools(object):
 				self.abort_test()
 	
 	def definition_current_url (self, breakONerror = True):
-	# определяет текущий URL браузера
+		# определяет текущий URL браузера
 		driver = self.driver
 		try:
 			url =  driver.current_url
@@ -212,7 +255,8 @@ class Uis_tools(object):
 		return url
 	
 	def choose_from_dropdown(self, dropdown_element = None, current_item = None):
-		# выбирает конкретное значение для из выпадающего списка. выпадающий список передается как элемент из pageElements а значение как строковое наименование
+		# выбирает конкретное значение для из выпадающего списка. выпадающий список передается как элемент из pageElements, а значение как строковое наименование
+		# пока не готово
 		driver = self.driver
 		try:
 			self.displayed_element(element_definition = dropdown_element)
@@ -223,9 +267,9 @@ class Uis_tools(object):
 				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 				sys.exit()		
 
-	# для вхлда использовать логин и пароль к сайту
-	def login_to(self, url = 'https://cw2.webdev.uiscom.ru/', user = None, password = None, breakONerror = True):
-	# логин в систему (в разработке: убрать проверку если активен попап)
+		# для вхлда использовать логин и пароль к сайту
+	def login_to(self, url = None, user = None, password = None, breakONerror = True):
+		# логин в систему (в разработке: убрать проверку если активен попап)
 		try:
 			self.init_browser()
 		except:
@@ -243,15 +287,18 @@ class Uis_tools(object):
 		try:
 			self.change_value(element_definition = lk_elements.INPUT('login_e-mail'), text = user)
 			self.change_value(element_definition = lk_elements.INPUT('login_password'), text = password)
-			self.clickElement(element_definition = lk_elements.BUTTON('btn_login'))
+			self.click_element(element_definition = lk_elements.BUTTON('btn_login'))
 		except Exception as ex:
 			loger.file_log(text = 'Can not input data (user name or password)', text_type = 'ERROR  ')
 			if breakONerror is True:
 				self.close_browser()
 				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 				sys.exit()
+		
 		time_index = 0
+		# проверка на то, что открыто именно то, что мы и ожидали.
 		while True:
+			print(str(url),  self.definition_current_url())
 			if str(url) == self.definition_current_url():
 				loger.file_log(text = 'Open URL done. URL = ' + str(url), text_type = 'SUCCESS')
 				break
@@ -264,10 +311,10 @@ class Uis_tools(object):
 			time_index += 1	
 
 	def switch_env(self, selected_element = None, server_name = 'sitecw2.webdev.uiscom.ru',  breakONerror = True):
-	# изменяет тестовый сервер в личном кабинете ()
+		# изменяет тестовый сервер в личном кабинете ()
 		driver = self.driver
 		url_action_start = self.definition_current_url()
-		self.clickElement(element_definition = lk_elements.SELECT(element = selected_element), breakONerror = True)
+		self.click_element(element_definition = lk_elements.SELECT(element = selected_element), breakONerror = True)
 
 		# combobox_list = self.displayed_element(element_definition = lk_elements.COMBOBOX(element = 'test_site'))
 		# print(combobox_list)

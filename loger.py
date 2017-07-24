@@ -25,11 +25,11 @@ class Loger(object):
 		f.write(str(datetime.utcnow()) + ' : ' + str(text_type) + ' : ' + str(text) + '.' + '\n')
 		f.close()
 
-		if test_case_id != None:
-			client = APIClient('http://testrail.uiscom.ru/')
-			# client.user = None
-			# client.password = None
-			start_run = client.send_post('add_result/' + str(test_case_id),{"status_id" : 5,"comment" : str(comment)})
+		# if test_case_id != None:
+		# 	client = APIClient('http://testrail.uiscom.ru/')
+		# 	# client.user = None
+		# 	# client.password = None
+		# 	start_run = client.send_post('add_result/' + str(test_case_id),{"status_id" : 5,"comment" : str(comment)})
 	
 
 	# это несколькоуровневый логер. Масив будет содержать тип действия соблюдая вложенность по индексам (от глобального к частному)
