@@ -17,7 +17,7 @@ class LK(object):
 	def SELECT(self,element, mask = None, userType = None):
 		if element == 'lk_env_select':
 			return['//*[@id="cm-siteselector-1033-trigger-picker"]', None]
-		# боковое меню
+	# боковое меню личного кабинета
 		if element == 'sm_cons':
 			return['//*[@id="ul-treeview-1025-record-12782"]/tbody/tr/td/div/span', None]
 		if element == 'sm_cons_general_settings':
