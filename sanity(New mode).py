@@ -11,6 +11,7 @@ import datetime
 from datetime import datetime
 from testrail import *
 
+
 lk_elements  = pageElements.LK()
 # driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS)
 
@@ -36,36 +37,187 @@ for test_step in range(1):
 	step = tools.login_to(url = configLK.get_login_url, user = configLK.get_user_name, password = configLK.get_pass)
 	
 	# time.sleep(2)
-	# tools.switch_env(selected_element = 'lk_env_select', server_name = 'siteow1.webdev.uiscom.ru')
+	tools.switch_env(selected_element = 'lk_env_select', server_name = 'siteow1.webdev.uiscom.ru')
 	# time.sleep(1)
-	tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Уведомления"],  timeOut = 120)
-	tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Запросы к API"],  timeOut = 120)
-	# tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Уведомления"],  timeOut = 120)
+	tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Общие настройки"],  timeOut = 120)
 
-	tools.lk_sidemenu_navigation (item_menu = ['Виртуальная АТС', "Сценарии"],  timeOut = 120)
-	tools.lk_sidemenu_navigation (item_menu = ['Сайтфон'],  timeOut = 120)
-	tools.lk_sidemenu_navigation (item_menu = ["Уведомления"],  timeOut = 120)
-	tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Уведомления"],  timeOut = 120)
-	tools.lk_sidemenu_navigation (item_menu = ['Список обращений', "Звонки"],  timeOut = 120)
-	tools.lk_sidemenu_navigation (item_menu = ['Список обращений', "Чаты"],  timeOut = 120)
-	tools.lk_sidemenu_navigation (item_menu = ['Список обращений', "Цели"],  timeOut = 120)
-	time.sleep(5)
+	# print(tools.get_total_list_values_count()[0])
+	
+	tools.lk_sidemenu_navigation (item_menu = ['Лидогенератор'],  timeOut = 120)
 
+	# print(tools.get_total_list_values_count()[0])
+	
+	tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Общие настройки"],  timeOut = 120)
+	
+	# # создание новых шаблонов	
+	for i in range(2):
+		tools.general_settings_add_template(template_name = 'test_ziv_5Rle_' + str(i))
 
+	time.sleep(1)
 
-
-
-
-
-
-
-
-
+	# while True:
+	# 	if int(tools.get_total_list_values_count()[0]) < 26:
+	# 		break
+	# 	tools.general_settings_delete_templates(template_name = tools.general_settings_get_templates_list[1][0].text )
+	tools.general_settings_delete_templates(template_name = 'test_ziv_5_1' )
 
 
 
 
 
+
+
+
+	# while tools.displayed_element(element_definition = tools.get_paging_templates_list[1].get('дальше')):
+	# 	# print(tools.get_active_page)
+	# 	if '5' in tools.get_active_page[0]:
+	# 		break
+	# 	# print(tools.get_active_page[1].keys())
+	# 	tools.choose_paging_value('дальше', timeOut = 1, breakONerror = False)
+	# 	print('-'*100)
+
+
+
+
+
+
+		# time.sleep(2)
+
+	# items = tools.general_settings_get_templates_list
+	# for item in items[1]:
+	# 	print(item.text)
+	
+	# тут
+		# navi = tools.general_settings_get_paging_templates_list
+		# # print(navi[0])
+		# # print(navi[1])
+
+		# # for i in range(2):
+		# # 	index = 0 + i
+		# # 	try:
+		# # 		tools.general_settings_delete_templates(template_name = 'test_3y_' + str(index))
+		# # 	except Exception as ex:
+		# # 		print(ex)
+
+		# for i in range(5):
+		# 	tools.general_settings_add_template(template_name = 'test_01_' + str(i))
+		# 	time.sleep(3)
+
+
+		# print(tools.general_settings_get_templates_list)
+
+	# # тут
+		# 	# time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Теги'],  timeOut = 120)
+		# 	# time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Уведомления'],  timeOut = 120)
+		# 	# time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Графики активности'],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Адресная книга'],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Сотрудники'],  timeOut = 120)	
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Сайты'],  timeOut = 120)	
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Сайтфон'],  timeOut = 10)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Лидогенератор'],  timeOut = 10)
+			
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Аналитика', "Сегменты"],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Аналитика', "События"],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Аналитика', "Рекламные кампании"],  timeOut = 120)
+			
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Виртуальная АТС', "Факсы"],  timeOut = 10)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Виртуальная АТС', "База файлов"],  timeOut = 10)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Виртуальная АТС', "Опции разговора"],  timeOut = 10)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Виртуальная АТС', "Сценарии"],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Виртуальная АТС', "Виртуальные номера и правила"],  timeOut = 120)
+
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Консультант','Распределение обращений'],  timeOut = 10)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Консультант','Внешний вид'],  timeOut = 10)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Консультант','Каналы'],  timeOut = 10)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Консультант','Общие настройки'],  timeOut = 120)
+
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Уведомления"],  timeOut = 10)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Запросы к API"],  timeOut = 10)
+
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Лидогенерация'],  timeOut = 120)
+
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Список обращений', "Звонки"],  timeOut = 10)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Список обращений', "Чаты"],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Список обращений', "Заявки"],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Список обращений', "Цели"],  timeOut = 10)
+
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Общие отчёты', "Распределение входящих звонков"],  timeOut = 10)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Общие отчёты', "Обращения по сотрудникам"],  timeOut = 10)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Общие отчёты', "Качество обращений"],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Общие отчёты', "Динамика обращений"],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Общие отчёты', "Аудитория"],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Общие отчёты', "Анализ трафика"],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Общие отчёты', "Сквозная аналитика"],  timeOut = 120)
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Общие отчёты', "Содержание"],  timeOut = 120)
+
+		# 	time.sleep(2)
+		# 	tools.lk_sidemenu_navigation (item_menu = ['Обзор'],  timeOut = 10)
+
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ['Сайтфон'],  timeOut = 120)
+
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ['Сайтфон'],  timeOut = 120)
+
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ['Сайтфон'],  timeOut = 120)
+
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ['Сайтфон'],  timeOut = 120)
+
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ['Сайтфон'],  timeOut = 120)
+
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ['Виртуальная АТС', "Сценарии"],  timeOut = 120)
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Уведомления"],  timeOut = 120)
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ["Уведомления"],  timeOut = 120)
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Уведомления"],  timeOut = 120)
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ['Список обращений', "Звонки"],  timeOut = 120)
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ['Список обращений', "Чаты"],  timeOut = 120)
+		# 		# time.sleep(2)
+		# 		# tools.lk_sidemenu_navigation (item_menu = ['Список обращений', "Цели"],  timeOut = 120)
+	# 		# time.sleep(10)
 
 
 	# tools.top_menu_navigation(tab_name = 'Черный список')
@@ -80,25 +232,25 @@ for test_step in range(1):
 
 	# tools.get_total_list_values_count()
 	# # print(tools.get_total_list_values_count())
-	# # time.sleep(2)
+	# time.sleep(5)
 
-	# tools.lk_sidemenu_navigation (item_menu = ['Виртуальная АТС', "Виртуальные номера и правила"],  timeOut = 120)
-	# # time.sleep(1)
-	# tools.get_total_list_values_count()
-	# # print(tools.get_total_list_values_count())
-	
+		# tools.lk_sidemenu_navigation (item_menu = ['Виртуальная АТС', "Виртуальные номера и правила"],  timeOut = 120)
+		# # time.sleep(1)
+		# tools.get_total_list_values_count()
+		# # print(tools.get_total_list_values_count())
+		
 
-	# tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Уведомления"],  timeOut = 120)
-	# # time.sleep(1)
-	# tools.get_total_list_values_count()
+		# tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Уведомления"],  timeOut = 120)
+		# # time.sleep(1)
+		# tools.get_total_list_values_count()
 
-	# tools.lk_sidemenu_navigation (item_menu = ['Уведомления'],  timeOut = 120)
-	# # time.sleep(1)
-	# tools.get_total_list_values_count()
+		# tools.lk_sidemenu_navigation (item_menu = ['Уведомления'],  timeOut = 120)
+		# # time.sleep(1)
+		# tools.get_total_list_values_count()
 
-	# # tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Уведомления"],  timeOut = 120)
-	# # time.sleep(1)
-	# tools.get_total_list_values_count()
+		# # tools.lk_sidemenu_navigation (item_menu = ['Служебные', "Уведомления"],  timeOut = 120)
+		# # time.sleep(1)
+		# tools.get_total_list_values_count()
 
 
 	print('OVER!')

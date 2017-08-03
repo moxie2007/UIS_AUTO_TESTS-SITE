@@ -16,3 +16,5 @@ class Loger(object):
 		with open('testFile.log', 'a+', encoding='utf-8') as f:
 			f.write(str(datetime.utcnow()) + ' : ' + str(text_type) + ' : ' + str(text) + '.' + '\n')
 			f.close()
+
+	

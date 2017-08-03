@@ -138,7 +138,7 @@ class Uis_tools(object):
 	
 	def page_is(self, element_definition = None):
 	# проверяет отображение страницы для определённого элемента
-	# после введения ?testenv=1 необходимость этого отпала.
+	# после введения ?testenv=1 необходимость этого отпала. Но быть может пригодится как дополнительный параметр поиска.
 		self.element = None
 		driver = self.driver
 		try:
@@ -275,15 +275,24 @@ class Uis_tools(object):
 		time_index = 0
 		inner_index = 2
 		current_elems = []
+		# оперделяем какой заголовок отображен (какая страница)
+		while True:
+			try:
+				header_befor_switch = self.get_header_text
+				if type(header_befor_switch[0]) is str:
+					break
+			except:
+				pass
 
-
-		# elem_list2 = self.elements_list(object_type = 'tr', search_type = 'contains', mask = 'class, \'x-grid-tree-node-expanded  x-grid-row\'', timeOut = timeOut)
-		# for index in elem_list2[1]:
-		# 	if index.text != '' and index.text == item_menu[0]:
-		# 		item_menu.remove(item_menu[0])
-		# 		print('вскрытие:', index.text)
-		# print('+'*10)
-		# ищем открытый родитель и сдвигаем на подменю
+			if time_index >= timeOut:
+				self.close_browser()
+				loger.file_log(text = 'Can\'t find Header text from this page', text_type = 'ERROR  ')
+				if self.breakONerror == True:
+					self.abort_test()
+				# break
+			time.sleep(1)
+			time_index += 1
+		# проверяем не открыто ли уже головное меню (например: Общие отчёты, Список обращений, Служебные)
 		try:
 			mask = 'class, \'x-grid-tree-node-expanded  x-grid-row\''
 			elem_list9 = self.elements_list(object_type = 'tr', search_type = 'contains', mask = mask, timeOut = timeOut)[1]
@@ -291,109 +300,51 @@ class Uis_tools(object):
 				if  t.text == item_menu[0]:
 					inner_index += 1
 					item_menu.remove(item_menu[0])
-				# print(t.text)
 		except Exception as ex:
 			print(ex)
-		# print('+'*10)
-		# time.sleep(20)
-
+		time_index = 0
 		while True: 
 		# ищем пункт меню котовый к нажатию
 			mask = 'class, \' x-grid-cell-treecolumn x-grid-cell-first x-grid-cell-last x-unselectable x-grid-cell-treecolumn ul-tree-node-depth-' + str(inner_index) + '\''
 			elem_list = self.elements_list(object_type = 'td', search_type = 'contains', mask = mask, timeOut = timeOut)[1]
-			# проверка что искомый объект один, формирая список
-			# print(len(elem_list))
+			# проверка, что искомый объект один, формируя список
 			for elem in elem_list:
-				# print(elem.text)
 				if elem.text == item_menu[0]:
 					current_elems.append(elem)
-
-
 			if len(current_elems) == 1:
-				# print(current_elems[0].get_attribute('id'))
 				self.click_element(element_definition = current_elems[0], timeOut = timeOut)
 				loger.file_log(text = 'Was clicked side menu item: ' + str(current_elems[0].text), text_type = 'SUCCESS')
 				inner_index += 1
 				item_menu.remove(item_menu[0])
 				current_elems.remove(current_elems[0])
-				# print('try', item_menu, current_elems, inner_index)
-
-			if len(current_elems) == 0:
-				# item_menu.remove(item_menu[0])
-				print('БАБАХЕР', len(elem_list), len(current_elems), inner_index, mask)
-
-
+			# оставить для дебага
+			# if len(current_elems) == 0:
+			# 	# item_menu.remove(item_menu[0])
+			# 	print('БАБАХЕР', len(elem_list), len(current_elems), inner_index, mask)
 			if len(current_elems) > 1:
-				print('ПЕЧАЛЬКА', len(current_elems), inner_index, mask)
-
+				loger.file_log(text = 'Was found more than one item. Please check this method: lk_sidemenu_navigation', text_type = 'ERROR  ')
 			if len(item_menu) == 0:
-				# print('break')
 				break
-
 			if time_index >= timeOut:
 				self.close_browser()
 				loger.file_log(text = 'Can\'t choose your\'s menu item', text_type = 'ERROR  ')
 				break
 			time.sleep(1)
-			time_index += 1	
+			time_index += 1
+		# проверка на то, что нужная страница открыта (для этого, текст заголовка должен быть изменен)
+		time_index = 0
+		while True:
+			header_after_switch = self.get_header_text
+			if header_befor_switch[1] != header_after_switch[1]:
+				loger.file_log(text = 'Switching was done from ' + str(header_befor_switch[0]) + ' to ' + str(header_after_switch[0]), text_type = 'SUCCESS')
+				break
+			if time_index >= timeOut:
+				self.close_browser()
+				loger.file_log(text = 'Can\'t choose next item  from west menu, the page still: ' + str(header_after_switch[0]), text_type = 'ERROR  ')
+				break
+			time.sleep(1)
+			time_index += 1
 
-
-
-
-
-		# while len(item_menu) != 0:
-		# 	for elem in elem_list:
-		# 		if item_menu
-
-
-		# elem_list = self.elements_list(object_type = 'img', search_type = 'contains', mask = 'class, \' x-tree-elbow-img x-tree-elbow-end-plus x-tree-expander\'', timeOut = timeOut)[1]
-		# for elem in elem_list:
-		# 	try:
-		# 		if elem.get_attribute('role') == 'presentation':
-		# 			print(elem.)
-		# 	except Exception as ex:
-		# 		print(ex)
-		
-
-
-
-		# 		if len(item_menu) != 0 and elem_list:
-		# 			# выбираем все объекты текст которых соответствует иикомому
-		# 			current_ites = []
-		# 			for elem in elem_list:
-		# 				if elem.text == 
-
-
-
-		# 				if elem.text == item_menu[0]:
-		# 					# print('Жму на ' + str(item_menu[0]))
-		# 					self.click_element(element_definition = elem, timeOut = timeOut)
-		# 					loger.file_log(text = 'Was clicked side menu item: ' + str(elem.text), text_type = 'SUCCESS')
-		# 					item_menu.remove(item_menu[0])
-		# 					# time.sleep(2) # это настройка для дебага и в рабочей версии тут быть не должна
-		# 					if len(item_menu) != 0:
-		# 						pass
-		# 						# print('остался ' + str(item_menu[0]))
-		# 					break
-		# 		else:
-		# 			break
-		# 	except Exception as ex:
-		# 		loger.file_log(text = 'ошибка в навигации бокового меню', text_type = 'ERROR  ')
-		# 		print('sidemenu: ',ex)
-		# 		if breakONerror is True:
-		# 			self.close_browser()
-		# 			loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
-		# 			sys.exit()
-			
-		# 	if time_index >= timeOut:
-		# 		self.close_browser()
-		# 		loger.file_log(text = 'Can\'t choose your\'s menu item', text_type = 'ERROR  ')
-		# 		break
-		# 	time.sleep(1)
-		# 	time_index += 1	
-
-		# return 	elem_list
-	
 	def top_menu_navigation(self, tab_name = None, timeOut = 20):
 	# навигация по табам (вкладки вверху, активные выделяются зеленым)
 		elem_list = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'id, \'tab-\'', timeOut = timeOut)[1]
@@ -449,9 +400,21 @@ class Uis_tools(object):
 				break
 		return result
 
+
+	@property
+	def get_active_page(self):
+	# (!) находит активную страницу (это навигация по: В начало,1,2,дальше), по обводке вокруг значения
+		result = [[],{}]
+		elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'class, \'x-btn x-btn-ul-usual-without-border x-unselectable x-box-item x-toolbar-item x-btn-ul-usual-medium x-btn-pressed\'')
+		for elem in elems[1]:
+			if elem.text != '':
+				result[0].append(elem.text)
+				result[1][elem.text] = elem
+		return result	
+
 	@property
 	def alert_preset(self):
-	# возвращает количество и список объектов отображаемых иконок с ошибками если таковых нет то возвращает None
+	# (!) возвращает количество и список объектов отображаемых иконок с ошибками если таковых нет то возвращает None
 	# надо проверить работоспособность
 		displayed_elems = []
 		elem_list = self.elements_list(object_type = 'div',  search_type = 'contains',  mask = 'role, \'alert\'', timeOut = 10)[1]
@@ -548,10 +511,12 @@ class Uis_tools(object):
 	# поиск записай на странице выбирает формирует список объектов из элементов в таблице шаблонов ответа, в списке только отображенные на странице элементы
 		return self.elements_list(object_type = 'table', search_type = 'contains', mask = 'id, \'commonsettings-page-tableview-\'')
 
-	def general_settings_add_template(self, template_name = None):
-	# добавление нового шаблона (в разработке!!!)
+	def general_settings_add_template(self, template_name = None, timeOut = 120):
+	# (!) добавление нового шаблона, успешность проверяется по изменению количества записей на странице (в разработке!!!)
+		# получаем количество шаблонов
+		before_adding_template_values_count = self.get_total_list_values_count()[0]
+		# добавляем новый шаблон
 		if template_name != None:
-			print(template_name)
 			# ищем поле для ввода (поиск нужен потому, что все эллементы кроме страницы логина динамические)
 			elems = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'textfield-\'')[1]
 			for elem in elems:
@@ -559,62 +524,154 @@ class Uis_tools(object):
 					if elem.get_attribute('data-ref') == 'inputEl':
 						self.change_value(element_definition = elem, text = template_name)
 				except Exception as ex:
-					print(ex)
+					loger.file_log(text = 'Can\'t type the template name', text_type = 'ERROR  ')
 			# нажимаем кнопку добавить
-			elems = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'ul-mainbutton\'')
-			
+			elems = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'ul-mainbutton\'')		
 			elems_test = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'class, \'x-btn x-unselectable x-box-item x-btn-ul-main-medium\'')
 			elems_test[1][0].click()
-			# try:
-			# 	print(elems_test)
-			# except:
-			# 	ptint('looser')
-
-			# for elem in elems[1]:
-			# 	try:
-			# 		if elem.get_attribute('data-ref') == 'btnInnerEl' and elem.text == 'Добавить':
-			# 			self.click_element(element_definition = elem)
-			# 	except Exception as ex:
-			# 		print(ex)
-	
-
-	def get_total_list_values_count(self, timeOut = 20):
-	# поиск значения: Всего записей, со страниц с таблицами возвращает или текстовое значение или None
-		page_items = []
-		result = None
+		# проверяем, что значение общего количества шаблонов изменилось
 		time_index = 0
+		while True:
+			value_of_teamplates_after_chang = self.get_total_list_values_count()[0]
+			if int(value_of_teamplates_after_chang) - int(before_adding_template_values_count) == 1:
+				break
+			if time_index >= timeOut:
+				loger.file_log(text = 'Templates counter does not correct. It is: ' + str(value_of_teamplates_after_chang), text_type = 'ERROR  ')
+				break			
+			time.sleep(1)
+			time_index += 1	
 
-		print(self.get_header_text)
+	def get_total_list_values_count(self, timeOut = 3):
+	# (!) поиск значения: Всего записей, со страниц с таблицами возвращает список: текстовое значение и id cтраницы 
+	# !!! в разработке
+		page_items = []
+		result = []
+		time_index = 0
+		page = self.get_header_text
+		while True:
+			elems = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-toolbar-text x-box-item x-toolbar-item x-toolbar-text-ul\'', timeOut = 1)
+			empty_list = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-grid-empty\'', timeOut = 1)
+			# если эллементов нет и отображена надпись: Нет записей, прерываем поиск
+			if empty_list[0] != None and empty_list[1][0].text == 'Нет записей':
+				result.append(0)
+				result.append(page)
+				break
+			# проверяем видимы ли найденные элементы
+			for item in elems[1]:
+				if '-page-tbtext-displayItem-' in item.get_attribute('id') and self.displayed_element(element_definition = item, timeOut = 1)[0]:
+					page_items.append(item)
+			if len(page_items) == 1 and page_items[0].text != '':
+				result.append(page_items[0].text.split()[2])
+				result.append(page)
+				break		
+			if len(page_items) > 1:
+				loger.file_log(text = 'Was found more than one item. Please check result of the method: get_total_list_values_count', text_type = 'ERROR  ')
+				break			
+			if time_index >= timeOut:
+				loger.file_log(text = 'Can\'t found counter of the items', text_type = 'ERROR  ')
+				result.append(None)
+				result.append(page)
+				break			
+			time.sleep(1)
+			time_index += 1	
+		return result
 
-		# while True:
-		# 	elems = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-toolbar-text x-box-item x-toolbar-item x-toolbar-text-ul\'')
-		# 	# проверяем видимы ли найденные элементы
-		# 	for item in elems:
-		# 		if self.displayed_element(element_definition = item, timeOut = 1)[0]:
-		# 			page_items.append(item)
-		# 			#-----
-		# 			print(item.text)
+	def general_settings_delete_templates(self, template_name):
+	# (!)удаляет шаблон по имени
+	# нужна проверка на то, что шаблон отображен на странице
+		paging = 1 # если страниц более одной
+		# считаем сколько всего шаблонов есть до удаления
+		before_deleting_template_values_count = self.get_total_list_values_count()[0]
+		# ТУТ будет цикл если элемент есть на отображаемой странице если нет, то переходим на другу и так до последней страницы
+		value_parametrs = []
+		pages_with_templates = self.get_paging_templates_list
+		print(pages_with_templates)
 
-		# 	if len(page_items) == 1 and page_items[0].text != '':
-		# 		result = page_items[0].text.split()[2]
-		# 		break
-		# 	if elems[0] > 1:
-		# 		try:
-		# 			for qw in elems[1]:
-		# 				try:
-		# 					print(qw.text, qw.get_attribute('id'))
-		# 				except Exception as ex:
-		# 					print (ex)
-		# 		except Exception as ex:
-		# 			print (ex)
-		# 		loger.file_log(text = 'Was found more than one item. Please check result of the method: get_total_list_values_count', text_type = 'ERROR  ')
-		# 		break
-		# 	if time_index >= timeOut:
-		# 		loger.file_log(text = 'Can\'t found counter of the items', text_type = 'ERROR  ')
-		# 		break
-		# 	time.sleep(1)
-		# 	time_index += 1	
-		# return result
+		while True:
+			list_templates_elements = self.general_settings_get_templates_list
+			# находим соответствующий эллемент и получаем номер таблицы в которой он хранится и его собственный номер (реализовать проверки!!!)
+			for element in list_templates_elements[1]:
+				if element.text == str(template_name):
+					value_parametrs.append(element.get_attribute('id').split('-')[3])
+					value_parametrs.append(element.get_attribute('id').split('-')[5])
+					break
+			# если на текущей странице ничего не нашлось, то переходим на следующую. Если нашлось, то выходим из цикла поиска выполняем удаление
+			# если страница последняя а результат отрицательный то тоже выходим
+			if len(value_parametrs) == 0:
+				# создаю список с номерами страниц (номера могут быть только int)
+				numbers = []
+				for number in pages_with_templates[0]:
+					try:
+						numbers.append(int(number))
+					except Exception as ex:
+						pass
+				# выполняю переход на след страницу для поиска элемента
+				if paging in numbers:
+					self.choose_paging_value(page_name = paging)
+					paging += 1
+					print('test: ' ,numbers)
+					time.sleep(1)
+				else:
+					print('страницы кончились')
+					break
 
-	
 
+			else:
+				print('exit: ', value_parametrs)
+				print(self.displayed_element(element_definition = lk_elements.BUTTON('remove_template', mask = value_parametrs)))
+				break
+		
+		self.click_element(element_definition = lk_elements.BUTTON('remove_template', mask = value_parametrs))
+		time.sleep(1)
+
+
+		yes_button = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'ul-mainbutton-yes-\'')
+		for item in yes_button[1]:
+			if 'btnInnerEl' in item.get_attribute('id'):
+				self.click_element(element_definition = item)
+				break
+			# print(item.text, item.get_attribute('id'))
+		
+		# elements = self.elements_list (object_type = 'img', search_type = 'contains', mask = 'class, \'x-action-col-icon x-action-col-1\'',  timeOut = 10)
+		# # print(elements[0])
+		# print(value_parametrs)
+
+	@property
+	def get_paging_templates_list(self):
+	# получение списка всех возможных кнопок для постраничной навигации (возвращает объекты)
+		result = [[],{}]
+		elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'id, \'-page-ul-usualbutton-\'')
+		for elem in elems[1]:
+			if elem.text != '':
+				result[0].append(elem.text)
+				result[1][elem.text] = elem
+		return result
+
+	def choose_paging_value(self, page_name = None, timeOut = 120, breakONerror = True):
+	# нажимает на определенное значение страничной навигации
+		try:
+			active_template = self.get_active_page[0]
+			if len(active_template) == 1:
+				active_template = self.get_active_page[0]
+				# print('q', active_template)
+		except Exception as ex:
+			print('1:', ex)
+		
+		if page_name != None:
+			try:
+				self.click_element(element_definition = self.get_paging_templates_list[1].get(str(page_name)), timeOut = timeOut, breakONerror = breakONerror) 
+			except Exception as ex:
+				print('exp: ', ex)
+
+
+		time.sleep(1)
+
+		try:
+			if active_template == self.get_active_page[0]:
+				time.sleep(1)
+				print('ERROR')
+			else:
+				print('WAAABAHA', self.get_active_page[1].keys())
+
+		except Exception as ex:
+			print('nexp', ex)
