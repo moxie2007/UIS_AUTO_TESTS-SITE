@@ -79,6 +79,7 @@ class Uis_tools(object):
 	# открывает объект Браузера, доделать выбор браузера и добавить настройку полноэкранности
 		try:
 			self.driver = webdriver.Chrome()
+			# self.driver = webdriver.Firefox()
 			self.driver.maximize_window()
 			return self.driver
 		except Exception as ex:
@@ -240,9 +241,9 @@ class Uis_tools(object):
 				current_object[2].clear()
 				current_object[2].send_keys(str(text))
 		except Exception as ex:
-			print(ex)
+			# print(ex)
 			loger.file_log(text = 'can not change data in the element ' + str(element_definition) , text_type = 'ERROR  ')
-			print('test')
+			# print('test')
 			if breakONerror == True:
 				self.abort_test()
 	
@@ -403,14 +404,19 @@ class Uis_tools(object):
 
 	@property
 	def get_active_page(self):
-	# (!) находит активную страницу (это навигация по: В начало,1,2,дальше), по обводке вокруг значения
+	# находит активную страницу (это навигация по: В начало,1,2,дальше), по обводке вокруг значения
+	# больше одного значения по логике работы метода, быть не должно
 		result = [[],{}]
 		elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'class, \'x-btn x-btn-ul-usual-without-border x-unselectable x-box-item x-toolbar-item x-btn-ul-usual-medium x-btn-pressed\'')
 		for elem in elems[1]:
 			if elem.text != '':
 				result[0].append(elem.text)
 				result[1][elem.text] = elem
-		return result	
+		if len(result[0]) == 1:
+			return result
+		else:
+			loger.file_log(text = ('Unexpected items count: ', result[1]) , text_type = 'ERROR  ')
+			return [[None], {'1':None}]
 
 	@property
 	def alert_preset(self):
@@ -648,23 +654,32 @@ class Uis_tools(object):
 		return result
 
 	def choose_paging_value(self, page_name = None, timeOut = 120, breakONerror = True):
-	# нажимает на определенное значение страничной навигации
+	#(!) нажимает на определенное значение страничной навигации
+		# пытаемся определить на какой странице находимся
 		try:
 			active_template = self.get_active_page[0]
 			if len(active_template) == 1:
 				active_template = self.get_active_page[0]
-				# print('q', active_template)
+				print('q', active_template)
 		except Exception as ex:
-			print('1:', ex)
+			loger.file_log(text = 'Can\'t define active page', text_type = 'ERROR  ')
+			if breakONerror is True:
+				self.close_browser()
+				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+				sys.exit()
 		
 		if page_name != None:
 			try:
 				self.click_element(element_definition = self.get_paging_templates_list[1].get(str(page_name)), timeOut = timeOut, breakONerror = breakONerror) 
 			except Exception as ex:
-				print('exp: ', ex)
-
+			loger.file_log(text = 'Can\'t click necessary page name:' + str(page_name), text_type = 'ERROR  ')
+			if breakONerror is True:
+				self.close_browser()
+				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+				sys.exit()
 
 		time.sleep(1)
+		# необходимо добавить ожидание вместо sleep для проверки результата, получилось сменить страницу или нет.
 
 		try:
 			if active_template == self.get_active_page[0]:

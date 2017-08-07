@@ -51,7 +51,7 @@ for test_step in range(1):
 	
 	# # создание новых шаблонов	
 	for i in range(2):
-		tools.general_settings_add_template(template_name = 'test_ziv_5Rle_' + str(i))
+		tools.general_settings_add_template(template_name = 'test_IIz_Kv_5qwe_' + str(i))
 
 	time.sleep(1)
 
@@ -59,7 +59,9 @@ for test_step in range(1):
 	# 	if int(tools.get_total_list_values_count()[0]) < 26:
 	# 		break
 	# 	tools.general_settings_delete_templates(template_name = tools.general_settings_get_templates_list[1][0].text )
-	tools.general_settings_delete_templates(template_name = 'test_ziv_5_1' )
+	tools.general_settings_delete_templates(template_name = 'test_IIz_Kv_5qwe_0' )
+	time.sleep(5)
+	tools.general_settings_delete_templates(template_name = 'test_IIz_Kv_5qwe_1' )
 
 
 
