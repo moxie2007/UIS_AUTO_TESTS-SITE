@@ -65,7 +65,7 @@ class Uis_tools(object):
 
 
 	def init_testrail(self):
-	# это может и не работать, нужно отладить после тестов
+	# (!) это может и не работать, нужно отладить после тестов
 			try:
 				client = APIClient('http://testrail.uiscom.ru/')
 				# тут нужен логин и пароль для доступа в тестрейл
@@ -187,7 +187,16 @@ class Uis_tools(object):
 				pass
 			step += 1
 			time.sleep(1)
-		return [state, elementTyte, desired_element]	
+		return [state, elementTyte, desired_element]
+
+	def page_scrolling_to_the_element (self, page_object = None):
+	# перемещает отображаемую часть страницы к элементу. в метод передается объект webdriver
+		driver = self.driver
+		if page_object != None:
+			try:
+				driver.execute_script("return arguments[0].scrollIntoView();", page_object)
+			except Exception as ex:
+				print(ex)
 	
 	def elements_list (self, object_type = 'div', search_type = 'contains', mask = 'li',  timeOut = 10):
 	# создает список элементов по определенной маске, возвращает количество найденных эллементов и сами элементы в виде готовывых объектов
@@ -222,6 +231,7 @@ class Uis_tools(object):
 		try:
 			current_object = self.displayed_element(element_definition = element_definition, timeOut = timeOut)
 			if current_object[0] is True:
+				self.page_scrolling_to_the_element(page_object = current_object[2])
 				current_object[2].click()
 			else:
 				loger.file_log(text = 'can not click ' + str(element_definition) , text_type = 'ERROR  ')
@@ -272,7 +282,7 @@ class Uis_tools(object):
 				sys.exit()		
 
 	def lk_sidemenu_navigation(self, item_menu = ['Общие отчёты', 'Аудитория'],  timeOut = 120, breakONerror = True):
-	# навигация по основному меню (добавить timeout для while и зацепиться за родителя)
+	# (!) навигация по основному меню (добавить timeout для while и зацепиться за родителя)
 		time_index = 0
 		inner_index = 2
 		current_elems = []
@@ -401,7 +411,6 @@ class Uis_tools(object):
 				break
 		return result
 
-
 	@property
 	def get_active_page(self):
 	# находит активную страницу (это навигация по: В начало,1,2,дальше), по обводке вокруг значения
@@ -417,6 +426,52 @@ class Uis_tools(object):
 		else:
 			loger.file_log(text = ('Unexpected items count: ', result[1]) , text_type = 'ERROR  ')
 			return [[None], {'1':None}]
+
+	def get_total_list_values_count(self, timeOut = 3):
+	# поиск значения: Всего записей, со страниц с таблицами возвращает список: текстовое значение и id cтраницы 
+		page_items = []
+		result = []
+		time_index = 0
+		page = self.get_header_text
+		while True:
+			elems = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-toolbar-text x-box-item x-toolbar-item x-toolbar-text-ul\'', timeOut = 1)
+			empty_list = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-grid-empty\'', timeOut = 1)
+			# если эллементов нет и отображена надпись: Нет записей, прерываем поиск
+			if empty_list[0] != None and empty_list[1][0].text == 'Нет записей':
+				result.append(0)
+				result.append(page)
+				break
+			# проверяем видимы ли найденные элементы
+			for item in elems[1]:
+				if '-page-tbtext-displayItem-' in item.get_attribute('id') and self.displayed_element(element_definition = item, timeOut = 1)[0]:
+					page_items.append(item)
+			if len(page_items) == 1 and page_items[0].text != '':
+				result.append(page_items[0].text.split()[2])
+				result.append(page)
+				break		
+			if len(page_items) > 1:
+				loger.file_log(text = 'Was found more than one item. Please check result of the method: get_total_list_values_count', text_type = 'ERROR  ')
+				break			
+			if time_index >= timeOut:
+				loger.file_log(text = 'Can\'t found counter of the items', text_type = 'ERROR  ')
+				result.append(None)
+				result.append(page)
+				break			
+			time.sleep(1)
+			time_index += 1	
+		return result
+
+	@property
+	def get_paging_templates_list(self):
+	# получение списка всех возможных кнопок для постраничной навигации (возвращает объекты)
+		result = [[],{}]
+		elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'id, \'-page-ul-usualbutton-\'')
+		for elem in elems[1]:
+			if elem.text != '':
+				result[0].append(elem.text)
+				result[1][elem.text] = elem
+		return result
+
 
 	@property
 	def alert_preset(self):
@@ -444,7 +499,7 @@ class Uis_tools(object):
 				if server_name == current_server_name.text:
 					try:
 						# скролим список к нужному элементу
-						driver.execute_script("return arguments[0].scrollIntoView();", current_server_name)
+						self.page_scrolling_to_the_element(page_object = current_server_name)
 						# нажимаем на искомый элемент
 						current_server_name.click()
 						loger.file_log(text = 'Was clicked at item: (' + str(server_name) + ') from dropdown list' , text_type = 'SUCCESS')
@@ -452,7 +507,7 @@ class Uis_tools(object):
 						loger.file_log(text = 'can not click ' + str(element_definition) , text_type = 'ERROR  ')
 						if self.breakONerror == True:
 							self.abort_test()
-				# тут надо сделать проверку что сервер сменен правильно !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# если URL сменен то считаем, что смена прошла успешно
 		time_index = 0
 		while True:
 			if str(url_action_start) != str(self.definition_current_url()):
@@ -547,53 +602,22 @@ class Uis_tools(object):
 			time.sleep(1)
 			time_index += 1	
 
-	def get_total_list_values_count(self, timeOut = 3):
-	# (!) поиск значения: Всего записей, со страниц с таблицами возвращает список: текстовое значение и id cтраницы 
-	# !!! в разработке
-		page_items = []
-		result = []
-		time_index = 0
-		page = self.get_header_text
-		while True:
-			elems = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-toolbar-text x-box-item x-toolbar-item x-toolbar-text-ul\'', timeOut = 1)
-			empty_list = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-grid-empty\'', timeOut = 1)
-			# если эллементов нет и отображена надпись: Нет записей, прерываем поиск
-			if empty_list[0] != None and empty_list[1][0].text == 'Нет записей':
-				result.append(0)
-				result.append(page)
-				break
-			# проверяем видимы ли найденные элементы
-			for item in elems[1]:
-				if '-page-tbtext-displayItem-' in item.get_attribute('id') and self.displayed_element(element_definition = item, timeOut = 1)[0]:
-					page_items.append(item)
-			if len(page_items) == 1 and page_items[0].text != '':
-				result.append(page_items[0].text.split()[2])
-				result.append(page)
-				break		
-			if len(page_items) > 1:
-				loger.file_log(text = 'Was found more than one item. Please check result of the method: get_total_list_values_count', text_type = 'ERROR  ')
-				break			
-			if time_index >= timeOut:
-				loger.file_log(text = 'Can\'t found counter of the items', text_type = 'ERROR  ')
-				result.append(None)
-				result.append(page)
-				break			
-			time.sleep(1)
-			time_index += 1	
-		return result
-
-	def general_settings_delete_templates(self, template_name):
-	# (!)удаляет шаблон по имени
-	# нужна проверка на то, что шаблон отображен на странице
+	def general_settings_delete_templates(self, template_name, timeOut = 120):
+	# удаляет шаблон по имени/ ищет шаблон с первой страницы
 		paging = 1 # если страниц более одной
 		# считаем сколько всего шаблонов есть до удаления
 		before_deleting_template_values_count = self.get_total_list_values_count()[0]
-		# ТУТ будет цикл если элемент есть на отображаемой странице если нет, то переходим на другу и так до последней страницы
+		# ТУТ будет цикл, если элемент есть на отображаемой странице то удаляем. если нет, то переходим на следующую и так до последней страницы
 		value_parametrs = []
+		# получаю список всех страниц и перехожу на первую (для случая многократного удаления на разных страницах)
 		pages_with_templates = self.get_paging_templates_list
-		print(pages_with_templates)
-
+		if len(pages_with_templates[0]) > 1:
+			if self.get_active_page[0][0] != pages_with_templates[0][0]:
+				self.choose_paging_value(page_name = pages_with_templates[0][0])
 		while True:
+			# получаю список всех страниц доступных для перехода
+			pages_with_templates = self.get_paging_templates_list
+			# получаю список всех шаблонов отображенных на текущей странице
 			list_templates_elements = self.general_settings_get_templates_list
 			# находим соответствующий эллемент и получаем номер таблицы в которой он хранится и его собственный номер (реализовать проверки!!!)
 			for element in list_templates_elements[1]:
@@ -602,7 +626,7 @@ class Uis_tools(object):
 					value_parametrs.append(element.get_attribute('id').split('-')[5])
 					break
 			# если на текущей странице ничего не нашлось, то переходим на следующую. Если нашлось, то выходим из цикла поиска выполняем удаление
-			# если страница последняя а результат отрицательный то тоже выходим
+			# если страница последняя, а результат отрицательный то тоже выходим	
 			if len(value_parametrs) == 0:
 				# создаю список с номерами страниц (номера могут быть только int)
 				numbers = []
@@ -615,78 +639,99 @@ class Uis_tools(object):
 				if paging in numbers:
 					self.choose_paging_value(page_name = paging)
 					paging += 1
-					print('test: ' ,numbers)
 					time.sleep(1)
 				else:
-					print('страницы кончились')
+					# обшли все доступные страницы, но шаблона не нашли
 					break
-
-
 			else:
-				print('exit: ', value_parametrs)
-				print(self.displayed_element(element_definition = lk_elements.BUTTON('remove_template', mask = value_parametrs)))
-				break
+				# удаляемый шаблон найден, выходим из поиска
+				break		
+		if value_parametrs != []:
+			self.click_element(element_definition = lk_elements.BUTTON('remove_template', mask = value_parametrs), timeOut = timeOut)
+			# подтверждение удаления (нажатие на кнопку: Да)
+			yes_button = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'ul-mainbutton-yes-\'')
+			for item in yes_button[1]:
+				if 'btnInnerEl' in item.get_attribute('id'):
+					self.click_element(element_definition = item, timeOut = timeOut)
+					break
+			# ожидание удаления, если количество элементов на странице изменилось, то объект удалён
+			time_index = 0
+			while True:
+				value_of_teamplates_after_chang = self.get_total_list_values_count()[0]
+				if int(before_deleting_template_values_count) - int(value_of_teamplates_after_chang) == 1:
+					loger.file_log(text = 'Template: ' + str(template_name) + ', was successfully deleted', text_type = 'SUCCESS')
+					break
+				
+				if time_index >= timeOut:
+					loger.file_log(text = 'Counter of the Templates wasn\'t changed. Deleting of the ' + str(template_name) + ' failed', text_type = 'ERROR  ')
+					break			
+				time.sleep(1)
+				time_index += 1
+		else:
+			loger.file_log(text = 'Can\'t find such template name: ' + str(template_name), text_type = 'ERROR  ')
+
 		
-		self.click_element(element_definition = lk_elements.BUTTON('remove_template', mask = value_parametrs))
-		time.sleep(1)
-
-
-		yes_button = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'ul-mainbutton-yes-\'')
-		for item in yes_button[1]:
-			if 'btnInnerEl' in item.get_attribute('id'):
-				self.click_element(element_definition = item)
-				break
-			# print(item.text, item.get_attribute('id'))
-		
-		# elements = self.elements_list (object_type = 'img', search_type = 'contains', mask = 'class, \'x-action-col-icon x-action-col-1\'',  timeOut = 10)
-		# # print(elements[0])
-		# print(value_parametrs)
-
-	@property
-	def get_paging_templates_list(self):
-	# получение списка всех возможных кнопок для постраничной навигации (возвращает объекты)
-		result = [[],{}]
-		elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'id, \'-page-ul-usualbutton-\'')
-		for elem in elems[1]:
-			if elem.text != '':
-				result[0].append(elem.text)
-				result[1][elem.text] = elem
-		return result
 
 	def choose_paging_value(self, page_name = None, timeOut = 120, breakONerror = True):
-	#(!) нажимает на определенное значение страничной навигации
+	# нажимает на определенное значение страничной навигации
 		# пытаемся определить на какой странице находимся
 		try:
 			active_template = self.get_active_page[0]
 			if len(active_template) == 1:
 				active_template = self.get_active_page[0]
-				print('q', active_template)
 		except Exception as ex:
 			loger.file_log(text = 'Can\'t define active page', text_type = 'ERROR  ')
 			if breakONerror is True:
 				self.close_browser()
 				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 				sys.exit()
-		
+		# пытаемся переключить на страницу, имя которой передано в метод
 		if page_name != None:
 			try:
-				self.click_element(element_definition = self.get_paging_templates_list[1].get(str(page_name)), timeOut = timeOut, breakONerror = breakONerror) 
+				self.click_element(element_definition = self.get_paging_templates_list[1].get(str(page_name)), timeOut = timeOut, breakONerror = breakONerror)
 			except Exception as ex:
-			loger.file_log(text = 'Can\'t click necessary page name:' + str(page_name), text_type = 'ERROR  ')
-			if breakONerror is True:
-				self.close_browser()
-				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
-				sys.exit()
-
-		time.sleep(1)
+				loger.file_log(text = 'Can\'t click necessary page name:' + str(page_name), text_type = 'ERROR  ')
+				if breakONerror is True:
+					self.close_browser()
+					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+					sys.exit()
 		# необходимо добавить ожидание вместо sleep для проверки результата, получилось сменить страницу или нет.
+		time_index = 0
+		while True:
+			try:
+				current_page_index = self.get_active_page[0][0]
+			except:
+				pass
+			# текущая страница соответствует необходимой
+			if str(current_page_index) == str(page_name):
+				break
+			# переход В начало
+			if str(current_page_index) == '1' and page_name == 'В начало':
+				break
+			# переход по: дальше
+			if str(page_name) == 'дальше' and current_page_index != active_template:
+				break
+			# время ожидания истекло а переход так сделать и не удалось
+			if time_index >= timeOut:
+				loger.file_log(text = 'Can\'t switch from page: ' + str(active_template) + ', to the: ' + str(page_name), text_type = 'ERROR  ')
+				if breakONerror is True:
+					self.close_browser()
+					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+					sys.exit()
+				break	
+			time.sleep(1)
+			time_index += 1	
 
-		try:
-			if active_template == self.get_active_page[0]:
-				time.sleep(1)
-				print('ERROR')
-			else:
-				print('WAAABAHA', self.get_active_page[1].keys())
 
-		except Exception as ex:
-			print('nexp', ex)
+
+
+
+		# try:
+		# 	if active_template == self.get_active_page[0]:
+		# 		time.sleep(1)
+		# 		print('было: ',active_template, 'было нужно: ', page_name, 'стало: ', self.get_active_page[1].keys())
+		# 	else:
+		# 		print('было: ',active_template, 'было нужно: ', page_name, 'стало: ', self.get_active_page[1].keys())
+
+		# except Exception as ex:
+		# 	print('nexp', ex)
