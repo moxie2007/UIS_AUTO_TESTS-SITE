@@ -16,8 +16,9 @@ class LK(object):
 			return['//*[@id="commonsettings-page-tableview-' + str(mask[0]) + '-record-' + str(mask[1]) + '"]/tbody/tr/td[2]/div/a[2]/img', None]
 
 	def SELECT(self,element, mask = None, userType = None):
-		if element == 'lk_env_select':
-			return['//*[@id="cm-siteselector-1033-trigger-picker"]', None]
+		pass
+		# if element == 'lk_env_select':
+		# 	return['//*[@id="cm-siteselector-1033-trigger-picker"]', None]
 	# боковое меню личного кабинета, это не раьботает на ранней стадии разработки тестов не учтена динамика
 		# if element == 'sm_cons':
 		# 	return['//*[@id="ul-treeview-1025-record-12782"]/tbody/tr/td/div/span', None]

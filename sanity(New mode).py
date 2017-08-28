@@ -36,64 +36,65 @@ for test_step in range(1):
 	# авторизуемся в личном кабинете
 	step = tools.login_to(url = configLK.get_login_url, user = configLK.get_user_name, password = configLK.get_pass)
 	
-	# time.sleep(2)
-	tools.switch_env(selected_element = 'lk_env_select', server_name = 'siteow1.webdev.uiscom.ru')
+	# time.sleep(2) siteapp2.webdev.uiscom.ru  siteow1.webdev.uiscom.ru
+	tools.switch_env(selected_element = 'lk_env_select', server_name = 'siteapp2.webdev.uiscom.ru')
 	# time.sleep(1)
 	tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Общие настройки"],  timeOut = 120)
 
+	
 	# print(tools.get_total_list_values_count()[0])
 	
-	tools.lk_sidemenu_navigation (item_menu = ['Лидогенератор'],  timeOut = 120)
+	# tools.lk_sidemenu_navigation (item_menu = ['Лидогенератор'],  timeOut = 120)
 
-	# print(tools.get_total_list_values_count()[0])
+	# # print(tools.get_total_list_values_count()[0])
 	
-	tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Общие настройки"],  timeOut = 120)
+	# tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Общие настройки"],  timeOut = 120)
 	
 	# создание новых шаблонов	
 	# for i in range(60):
 	# 	tools.general_settings_add_template(template_name = 'txbest_IIIz_Kv_5qwe_' + str(i))
 
-	time.sleep(1)
+	# time.sleep(1)
 
-	# while True:
-	# 	if int(tools.get_total_list_values_count()[0]) < 26:
-	# 		break
-	# 	tools.general_settings_delete_templates(template_name = tools.general_settings_get_templates_list[1][0].text )
+	while True:
+		if int(tools.get_total_list_values_count()[0]) < 10:
+			break
+		tools.general_settings_delete_templates(template_name = tools.general_settings_get_templates_list[1][0].text )
 	
 
 
-	tools.general_settings_delete_templates(template_name = 'txbest_IIIz_Kv_5qwe_2', timeOut = 5 )
-	
-	time.sleep(2)
-	try:
-		print(tools.get_total_list_values_count()[0])
-	except Exception as ex:
-		print('--: ', ex)
+			# tools.general_settings_delete_templates(template_name = 'txbest_IIIz_Kv_5qwe_2', timeOut = 5 )
+			
+			# time.sleep(2)
+			# try:
+			# 	print(tools.get_total_list_values_count()[0])
+			# except Exception as ex:
+			# 	print('--: ', ex)
 
-	time.sleep(1)
-	tools.general_settings_delete_templates(template_name = 'txbest_IIIz_Kv_5qwe_10', timeOut = 5  )
+			# time.sleep(1)
+			# tools.general_settings_delete_templates(template_name = 'txbest_IIIz_Kv_5qwe_10', timeOut = 5  )
 
-	time.sleep(1)
-	try:
-		print(tools.get_total_list_values_count()[0])
-	except Exception as ex:
-		print('--: ', ex)
+			# time.sleep(1)
+			# try:
+			# 	print(tools.get_total_list_values_count()[0])
+			# except Exception as ex:
+			# 	print('--: ', ex)
 
-	time.sleep(2)
-	tools.general_settings_delete_templates(template_name = 'test_Kziv_5qwe_1', timeOut = 5  )
-
-
-	try:
-		tools.choose_paging_value('дальше', timeOut = 1, breakONerror = False)
-	except:
-		pass
-
-	# tools.get_active_page
+	# time.sleep(2)
+	# tools.general_settings_delete_templates(template_name = 'test_Kziv_5qwe_1', timeOut = 5  )
 
 
-	tools.lk_sidemenu_navigation (item_menu = ['Аналитика', "Рекламные кампании"],  timeOut = 120)
+	# try:
+	# 	tools.choose_paging_value('дальше', timeOut = 1, breakONerror = False)
+	# except:
+	# 	pass
 
-	time.sleep(5)
+	# tools.get_active_page_in_list
+
+
+	# tools.lk_sidemenu_navigation (item_menu = ['Аналитика', "Рекламные кампании"],  timeOut = 120)
+
+	# time.sleep(5)
 
 	# for i in range (5):
 	# 	tools.general_settings_delete_templates(template_name = 'test_IIIz_Kv_5qwe_' + str(4 + i))
@@ -106,10 +107,10 @@ for test_step in range(1):
 
 
 	# while tools.displayed_element(element_definition = tools.get_paging_templates_list[1].get('дальше')):
-	# 	# print(tools.get_active_page)
-	# 	if '5' in tools.get_active_page[0]:
+	# 	# print(tools.get_active_page_in_list)
+	# 	if '5' in tools.get_active_page_in_list[0]:
 	# 		break
-	# 	# print(tools.get_active_page[1].keys())
+	# 	# print(tools.get_active_page_in_list[1].keys())
 	# 	tools.choose_paging_value('дальше', timeOut = 1, breakONerror = False)
 	# 	print('-'*100)
 

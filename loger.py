@@ -6,7 +6,7 @@ from datetime import datetime
 
 from testrail import *
 
-class Loger(object):
+class Loger():
 	def console_log(text, text_type):
 		# тут должен преобразователь из технических имён в названия элементов 
 		return text
@@ -17,4 +17,4 @@ class Loger(object):
 			f.write(str(datetime.utcnow()) + ' : ' + str(text_type) + ' : ' + str(text) + '.' + '\n')
 			f.close()
 
-	
+
