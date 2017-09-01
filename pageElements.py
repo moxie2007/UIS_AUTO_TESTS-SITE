@@ -14,6 +14,15 @@ class LK(object):
 	# Консультант - общие настройки, шаблон кнопки удаление 
 		if element == 'remove_template':
 			return['//*[@id="commonsettings-page-tableview-' + str(mask[0]) + '-record-' + str(mask[1]) + '"]/tbody/tr/td[2]/div/a[2]/img', None]
+		if element == 'edit_template':
+			return['//*[@id="commonsettings-page-tableview-' + str(mask[0]) + '-record-' + str(mask[1]) + '"]/tbody/tr/td[2]/div/a[1]/img', None]
+		# кнопка сохранения отредактированного шаблона
+		if element == 'save_template_name_icon':
+			return['//*[@id="commonsettings-page-displayfield-id-' + str(int(mask) + 1) + '-inputEl"]/a[1]/img', None]
+		if element == 'cancel_template_name_icon':
+			return['//*[@id="commonsettings-page-displayfield-id-' + str(int(mask) + 1) + '-inputEl"]/a[2]/img', None]
+
+
 
 	def SELECT(self,element, mask = None, userType = None):
 		pass

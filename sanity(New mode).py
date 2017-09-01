@@ -16,7 +16,7 @@ lk_elements  = pageElements.LK()
 # driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS)
 
 # импортируем настройки из предварительно подготовленного файла
-configLK = tools.Use_config()
+configLK = tools.User_config()
 configLK.set_lk_parametrs()
 
 # это надо еще сделать!!!!!!
@@ -37,12 +37,19 @@ for test_step in range(1):
 	step = tools.login_to(url = configLK.get_login_url, user = configLK.get_user_name, password = configLK.get_pass)
 	
 	# time.sleep(2) siteapp2.webdev.uiscom.ru  siteow1.webdev.uiscom.ru
-	tools.switch_env(selected_element = 'lk_env_select', server_name = 'siteapp2.webdev.uiscom.ru')
+	tools.switch_env(selected_element = 'lk_env_select', server_name = 'sitecw2.webdev.uiscom.ru')
 	# time.sleep(1)
 	tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Общие настройки"],  timeOut = 120)
 
-	
+	tools.general_settings_edit_template(template_name = 'test_1', new_name = 'test_1_1', timeOut = 120)
+	# //*[@id="commonsettings-page-displayfield-id-1170-inputEl"]/a[1]/img
+	# time.sleep(2)
+
+	tools.general_settings_edit_template(template_name = 'test_1_1', new_name = 'test_1', timeOut = 120)
 	# print(tools.get_total_list_values_count()[0])
+
+
+
 	
 	# tools.lk_sidemenu_navigation (item_menu = ['Лидогенератор'],  timeOut = 120)
 
@@ -51,15 +58,15 @@ for test_step in range(1):
 	# tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Общие настройки"],  timeOut = 120)
 	
 	# создание новых шаблонов	
-	# for i in range(60):
-	# 	tools.general_settings_add_template(template_name = 'txbest_IIIz_Kv_5qwe_' + str(i))
+	for i in range(1):
+		tools.general_settings_add_template(template_name = 'txbwe_' + str(i+1))
 
 	# time.sleep(1)
 
-	while True:
-		if int(tools.get_total_list_values_count()[0]) < 10:
-			break
-		tools.general_settings_delete_templates(template_name = tools.general_settings_get_templates_list[1][0].text )
+	# while True:
+	# 	if int(tools.get_total_list_values_count()[0]) < 10:
+	# 		break
+	# 	tools.general_settings_delete_templates(template_name = tools.general_settings_get_templates_list[1][0].text )
 	
 
 
