@@ -25,9 +25,20 @@ class LK(object):
 
 
 	def SELECT(self,element, mask = None, userType = None):
-		pass
-		# if element == 'lk_env_select':
-		# 	return['//*[@id="cm-siteselector-1033-trigger-picker"]', None]
+	# Личный кабинет настройки консультант обратный звонок 
+		# включатель \ выключатель состояния капчи (предварительно определить динамическую часть id)
+		if element == 'lk_kons_kapcha_select':
+			return['//*[@id="channels-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]', None]
+		# ВКЛ состояние выкючателя
+		if element == 'state_on_kons_kapcha_select':
+			return['//*[@id="channels-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]/span/span[1]', None]
+		# ВЫКЛ состояние выкючателя
+		if element == 'state_off_kons_kapcha_select':
+			return['//*[@id="channels-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]/span/span[3]', None]
+		if element == 'test':
+			return['channels-page-cm-switchbox-is_captcha_enabled-' + str(mask), None]
+
+	                # //*[@id="channels-page-cm-switchbox-is_captcha_enabled-1136-inputEl"]/span/span[1]
 	# боковое меню личного кабинета, это не раьботает на ранней стадии разработки тестов не учтена динамика
 		# if element == 'sm_cons':
 		# 	return['//*[@id="ul-treeview-1025-record-12782"]/tbody/tr/td/div/span', None]

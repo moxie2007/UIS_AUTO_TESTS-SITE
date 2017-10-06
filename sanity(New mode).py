@@ -36,16 +36,33 @@ for test_step in range(1):
 	# авторизуемся в личном кабинете
 	step = tools.login_to(url = configLK.get_login_url, user = configLK.get_user_name, password = configLK.get_pass)
 	
-	# time.sleep(2) siteapp2.webdev.uiscom.ru  siteow1.webdev.uiscom.ru
-	tools.switch_env(selected_element = 'lk_env_select', server_name = 'sitecw2.webdev.uiscom.ru')
-	# time.sleep(1)
-	tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Общие настройки"],  timeOut = 120)
+	# # time.sleep(2) siteapp2.webdev.uiscom.ru  siteow1.webdev.uiscom.ru
+	tools.switch_env(selected_element = 'lk_env_select', server_name = 'siteapp2.webdev.uiscom.ru')
+	# # time.sleep(1)
+	# tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Общие настройки"],  timeOut = 120)
 
-	tools.general_settings_edit_template(template_name = 'test_1', new_name = 'test_1_1', timeOut = 120)
+	# tools.general_settings_edit_template(template_name = 'test_1', new_name = 'test_1_1', timeOut = 120)
 	# //*[@id="commonsettings-page-displayfield-id-1170-inputEl"]/a[1]/img
 	# time.sleep(2)
 
-	tools.general_settings_edit_template(template_name = 'test_1_1', new_name = 'test_1', timeOut = 120)
+	# JS запросы на сайте
+		# tools.goto(url = "http://siteow1.webdev.uiscom.ru/")
+		# time.sleep(2)
+		# print(tools.execute_console_command(command = "Comagic.getVisitorId()", breakONerror = True))
+
+	time.sleep(2)
+
+	tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Каналы"],  timeOut = 120)
+	time.sleep(2)
+	tools.top_menu_navigation(tab_name = 'Обратный звонок')
+	time.sleep(3)
+	print(tools.define_kapcha_status)
+	tools.switch_kapcha_status()
+	time.sleep(3)
+	print(tools.define_kapcha_status)
+
+
+	# tools.general_settings_edit_template(template_name = 'test_1_1', new_name = 'test_1', timeOut = 120)
 	# print(tools.get_total_list_values_count()[0])
 
 
@@ -58,8 +75,8 @@ for test_step in range(1):
 	# tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Общие настройки"],  timeOut = 120)
 	
 	# создание новых шаблонов	
-	for i in range(1):
-		tools.general_settings_add_template(template_name = 'txbwe_' + str(i+1))
+	# for i in range(1):
+	# 	tools.general_settings_add_template(template_name = 'txbwe_' + str(i+1))
 
 	# time.sleep(1)
 

@@ -5,6 +5,8 @@ import datetime
 from datetime import datetime
 import os, sys, codecs, sqlite3, re
 
+import multiprocessing.dummy as multiprocessing
+
 from xml.etree import ElementTree as etree
 
 from selenium import webdriver
@@ -16,6 +18,8 @@ import pageElements
 import loger 
 from loger import Loger as loger
 from testrail import *
+
+import unittest
 
 lk_elements  = pageElements.LK()
 
@@ -93,6 +97,25 @@ class Uis_tools(object):
 			self.driver.quit()
 			self.driver = None
 
+	def sleep_function(self, timeout = 120):
+		time.sleep(timeOut)
+		return 'timeout'
+			
+
+	def wait_for_event (self, action, timeout = 120):
+		#(С!) новая ожидалка
+		driver = self.driver
+		p = multiprocessing.Pool()
+		timer = time.sleep(timeout)
+
+		results=[]
+		for r  in p.imap_unordered(lambda f: f(),[a,b,c]):
+			if r:
+				break
+
+		print(results)
+		p.close()
+
 	def goto(self, url = None, breakONerror = False, delete_cookies = False):
 	# осуществляет переход по URL 
 		driver = self.driver
@@ -110,6 +133,22 @@ class Uis_tools(object):
 			loger.file_log(text = 'can not open URL. URL = ' + str(self.url) , text_type = 'ERROR  ')
 			if self.breakONerror == True:
 				self.abort_test()
+
+	def execute_console_command(self, command = None, breakONerror = True):
+	#(С!) метод выполняющий консольную команду, придумать, как проверять результат
+		driver = self.driver
+		try:
+			result = driver.execute_script(command)
+			# driver.execute_script("return document.title").assertTrue(type(result) == unicode or type(result) == str,"The type of the result is " + str(type(result))).assertEqual("XHTML Test Page", result)
+			# driver.execute_script(command)
+		except Exception as ex:
+			loger.file_log(text = 'Can\'t do this (' + str(command) + ').\n command error is:' + str(ex), text_type = 'ERROR  ')
+			result = None
+			if breakONerror is True:
+				self.close_browser()
+				loger.file_log(text = 'Finish sanity test with Error:', text_type = 'SUCCESS')
+				sys.exit()
+		return result
 
 	def element_is(self, element_definition = None):
 	# проверяет наличие определенного элемента на странице
@@ -189,6 +228,7 @@ class Uis_tools(object):
 				pass
 			step += 1
 			time.sleep(1)
+
 		return [state, elementTyte, desired_element]
 
 	def page_scrolling_to_the_element (self, page_object = None):
@@ -827,3 +867,73 @@ class Uis_tools(object):
 			# 	if 'btnInnerEl' in item.get_attribute('id'):
 			# 		self.click_element(element_definition = item, timeOut = timeOut)
 			# 		break
+
+	@property
+	def define_kapcha_status(self):
+	# (С)определяем статус выключателя капча: True включена, False выключена, считаем что элемент уже есть на странице
+	# если элемент не успел отрисоваться то будет
+		# находим все однотиповые эллементы (текст на странице с переключателем)
+		id_is = None
+		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'cm-switchbox-\'')
+		if needed_elements != [None,[None]]:
+		# ищем динамическую часть id для переключателя капчи	
+			for needed_element in needed_elements[1]:
+				try:
+					if 'Защита от спама (капча):' in needed_element.text:
+						id_is = needed_element.get_attribute('id').split('-')[5]
+						break
+				except Exception as ex:
+					print(ex)					
+			if id_is != None:
+				# кидаем консольную команду и получаем статус кнопки (хорошо б что-нить еще придумать сюда вместо такого способа)
+				kapcha_status = self.execute_console_command(command = "return window.Ext.getCmp('channels-page-cm-switchbox-is_captcha_enabled-" + str(id_is) + "').getValue()")
+		return kapcha_status
+
+	def switch_kapcha_status(self, timeOut = 120):
+	# (С!)переключаем выключатель капчи
+		# определяем текущий статус капчи, если статус определить не удалось считаем что капчи нет на странице
+		timer = 0
+		while True:
+			try:
+				previus_kapcha_status = self.define_kapcha_status
+				break
+			except:
+				pass
+
+			if timer >= timeOut:
+				loger.file_log(text = 'Can\'t switch tumbler of the  kapcha, Can\'t find kapcha at page', text_type = 'ERROR  ')
+				break
+
+			time.sleep(1)
+			timer += 1
+
+		# меняем статус
+		# находим все однотиповые эллементы (текст на странице с переключателем)
+		id_is = None
+		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'cm-switchbox-\'')
+		if needed_elements != [None,[None]]:
+		# ищем динамическую часть id для переключателя капчи	
+			for needed_element in needed_elements[1]:
+				try:
+					if 'Защита от спама (капча):' in needed_element.text:
+						id_is = needed_element.get_attribute('id').split('-')[5]
+						break
+				except Exception as ex:
+					print(ex)					
+			if id_is != None:
+				self.click_element(element_definition = lk_elements.SELECT('lk_kons_kapcha_select', mask = id_is))
+		# после смены проверяем, что статус сменен и не равен старому
+		timer = 0
+		while True:
+			if previus_kapcha_status != self.define_kapcha_status:
+				loger.file_log(text = "Kapcha was changed", text_type = 'SUCCESS')
+				break
+			if timer >= timeOut:
+				loger.file_log(text = 'Can\'t switch tumbler of the  kapcha', text_type = 'ERROR  ')
+				break
+			timer += 1
+			time.sleep(1)
+		# возвращаем новый статус капчи
+
+	def konsultant_back_phone(self, kaptcha = False):
+		pass
