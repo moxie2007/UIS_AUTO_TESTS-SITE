@@ -90,10 +90,10 @@ class Uis_tools(start_uis_test.Global_unit):
  		return self.driver
 
 	def sleep_function(self, timeout = 120):
+	# (С!) метод хорошо б применить в связке с асинк эвейт для коректного ожидания элементов на странице
 		time.sleep(timeOut)
 		return 'timeout'
 			
-
 	def wait_for_event (self, action, timeout = 120):
 		#(С!) новая ожидалка
 		driver = self.driver
@@ -233,6 +233,7 @@ class Uis_tools(start_uis_test.Global_unit):
 	
 	def elements_list (self, object_type = 'div', search_type = 'contains', mask = 'li', timeOut = 10):
 	# (C!)создает список элементов по определенной маске, возвращает количество найденных эллементов и сами элементы в виде готовывых объектов
+	# хорошо б придумать нормальный выбор между x-path и css selector
 		result = [None,[None], None]
 		driver = self.driver
 		step = 1
@@ -311,7 +312,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		return url
 	
 	def choose_from_dropdown(self, dropdown_element = None, current_item = None):
-	# выбирает конкретное значение для из выпадающего списка. выпадающий список передается как элемент из pageElements, а значение как строковое наименование
+	# (C!)выбирает конкретное значение для из выпадающего списка. выпадающий список передается как элемент из pageElements, а значение как строковое наименование
 	# пока не готово
 		driver = self.driver
 		try:
@@ -666,149 +667,9 @@ class Uis_tools(start_uis_test.Global_unit):
 			time.sleep(1)
 			time_index += 1	
 
-# обработка личного кабинета - Консультант - Общие настройки - Шаблоны сообщений
-	def choose_paging_value(self, page_name = None, timeOut = 120, breakONerror = True):
-	# (C) нажимает на определенное значение страничной навигации
-		# пытаемся определить на какой странице находимся
-		try:
-			active_template = self.get_active_page_in_list[0]
-			if len(active_template) == 1:
-				active_template = self.get_active_page_in_list[0]
-		except Exception as ex:
-			loger.file_log(text = 'Can\'t define active page', text_type = 'ERROR  ')
-			if breakONerror is True:
-				self.close_browser()
-				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
-				sys.exit()
-		# пытаемся переключить на страницу, имя которой передано в метод
-		if page_name != None:
-			try:
-				self.click_element(element_definition = self.get_paging_templates_list[1].get(str(page_name)), timeOut = timeOut, breakONerror = breakONerror)
-			except Exception as ex:
-				loger.file_log(text = 'Can\'t click necessary page name:' + str(page_name), text_type = 'ERROR  ')
-				if breakONerror is True:
-					self.close_browser()
-					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
-					sys.exit()
-		# необходимо добавить ожидание вместо sleep для проверки результата, получилось сменить страницу или нет.
-		time_index = 0
-		while True:
-			try:
-				current_page_index = self.get_active_page_in_list[0][0]
-			except:
-				pass
-			# текущая страница соответствует необходимой
-			if str(current_page_index) == str(page_name):
-				break
-			# переход В начало
-			if str(current_page_index) == '1' and page_name == 'В начало':
-				break
-			# переход по: дальше
-			if str(page_name) == 'дальше' and current_page_index != active_template:
-				break
-			# время ожидания истекло а переход так сделать и не удалось
-			if time_index >= timeOut:
-				loger.file_log(text = 'Can\'t switch from page: ' + str(active_template) + ', to the: ' + str(page_name), text_type = 'ERROR  ')
-				if breakONerror is True:
-					self.close_browser()
-					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
-					sys.exit()
-				break	
-			time.sleep(1)
-			time_index += 1	
-
-		# try:
-		# 	if active_template == self.get_active_page_in_list[0]:
-		# 		time.sleep(1)
-		# 		print('было: ',active_template, 'было нужно: ', page_name, 'стало: ', self.get_active_page_in_list[1].keys())
-		# 	else:
-		# 		print('было: ',active_template, 'было нужно: ', page_name, 'стало: ', self.get_active_page_in_list[1].keys())
-
-		# except Exception as ex:
-		# 	print('nexp', ex)
 
 
-	def general_settings_edit_template(self, template_name, new_name, timeOut = 120):
-	# (!C) открывает шаблон по имени для редактирования/ ищет шаблон с первой страницы
-	# после редактирования ищет измененное имя.
-		paging = 1 # если страниц более одной
-		# считаем сколько всего шаблонов есть до удаления
-		before_deleting_template_values_count = self.get_total_list_values_count()[0]
-		# ТУТ будет цикл, если элемент есть на отображаемой странице то удаляем. если нет, то переходим на следующую и так до последней страницы
-		value_parametrs = []
-		# получаю список всех страниц и перехожу на первую (для случая многократного удаления на разных страницах)
-		pages_with_templates = self.get_paging_templates_list
-		if len(pages_with_templates[0]) > 1:
-			if self.get_active_page_in_list[0][0] != pages_with_templates[0][0]:
-				self.choose_paging_value(page_name = pages_with_templates[0][0])
-		while True:
-			# получаю список всех страниц доступных для перехода
-			pages_with_templates = self.get_paging_templates_list
-			# получаю список всех шаблонов отображенных на текущей странице
-			list_templates_elements = self.general_settings_get_templates_list
-			# находим соответствующий эллемент и получаем номер таблицы в которой он хранится и его собственный номер (реализовать проверки!!!)
-			for element in list_templates_elements[1]:
-				if element.text == str(template_name):
-					value_parametrs.append(element.get_attribute('id').split('-')[3])
-					value_parametrs.append(element.get_attribute('id').split('-')[5])
-					break
-			# если на текущей странице ничего не нашлось, то переходим на следующую. Если нашлось, то выходим из цикла поиска выполняем удаление
-			# если страница последняя, а результат отрицательный то тоже выходим	
-			if len(value_parametrs) == 0:
-				# создаю список с номерами страниц (номера могут быть только int)
-				numbers = []
-				for number in pages_with_templates[0]:
-					try:
-						numbers.append(int(number))
-					except Exception as ex:
-						pass
-				# выполняю переход на след страницу для поиска элемента
-				if paging in numbers:
-					self.choose_paging_value(page_name = paging)
-					paging += 1
-					time.sleep(1)
-				else:
-					# обшли все доступные страницы, но шаблона не нашли
-					break
-			else:
-				# удаляемый шаблон найден, выходим из поиска
-				break		
-		if value_parametrs != []:
-			self.click_element(element_definition = lk_elements.BUTTON('edit_template', mask = value_parametrs), timeOut = timeOut)
-			# находим открытый для редактирования шаблон и изменяем
-			template_for_change = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'commonsettings-page-textfield-value-\'')
-			if template_for_change[0] == 1:
-				# получаем динамический эллемент объекта
-				# print(template_for_change[1][0].get_attribute('id'))
-				template_id = template_for_change[1][0].get_attribute('id').split('-')[4] 
-				# меняем значение\имя шаблона
-				self.change_value(element_definition = template_for_change[1][0], text = new_name)
-			else:
-				loger.file_log(text = 'Were found more than one template. Check templates definition in this method: general_settings_edit_template ', text_type = 'ERROR  ')
-				self.abort_test()
-			# сохраняем измененное значение
-			self.click_element(element_definition = lk_elements.BUTTON('save_template_name_icon', mask = template_id), timeOut = 5)
-
-			# проверяем что изменения сделаны.
-
-
-
-
-
-
-
-
-
-
-
-			# # подтверждение удаления (нажатие на кнопку: Да)
-			# yes_button = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'ul-mainbutton-yes-\'')
-			# for item in yes_button[1]:
-			# 	if 'btnInnerEl' in item.get_attribute('id'):
-			# 		self.click_element(element_definition = item, timeOut = timeOut)
-			# 		break
-
-
+# ______________________________________________________________________________________________
 # (!)обработка личного кабинета - Консультант - Каналы - Обратный звонок
 	def channels_back_call_choose_of_the_schedule(self, graphik_name = None):
 	# (!С) выбираем график показа виджет обратного звонка/ значение None соответствует любое значение
