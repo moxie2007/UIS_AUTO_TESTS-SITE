@@ -21,7 +21,13 @@ class LK(object):
 			return['//*[@id="commonsettings-page-displayfield-id-' + str(int(mask) + 1) + '-inputEl"]/a[1]/img', None]
 		if element == 'cancel_template_name_icon':
 			return['//*[@id="commonsettings-page-displayfield-id-' + str(int(mask) + 1) + '-inputEl"]/a[2]/img', None]
-
+	# Консультант - каналы, обратный звонок
+		# кнопка для открытия выпадающего списка: графиков показа
+		if element == 'cons_back_call_schedule_drop_down_btn':
+			# return['//*[@id="channels-page-cm-schedulecombo-schedule_id-' + str(mask) + '-trigger-picker"]', None]
+			print(int(mask) + 1)
+			return['channels-page-cm-schedulecombo-schedule_id-' + str(int(mask) + 1) + '-trigger-picker"]', None]
+                             # channels-page-cm-schedulecombo-schedule_id-1138-trigger-picker
 
 
 	def SELECT(self,element, mask = None, userType = None):

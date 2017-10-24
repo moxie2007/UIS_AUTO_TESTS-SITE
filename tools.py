@@ -21,6 +21,8 @@ from testrail import *
 
 import unittest
 
+import start_uis_test
+
 lk_elements  = pageElements.LK()
 
 class User_config():
@@ -63,9 +65,12 @@ class User_config():
 	def get_pass(self):
 		return self.password
 
-class Uis_tools(object):
-	def __init__(self):
-		self.driver = None
+# class Uis_tools():
+# 	def __init__(self):
+		# self.driver = None
+class Uis_tools(start_uis_test.Global_unit):
+	def __init__(self, driver):
+		self.driver = driver
 
 
 	def init_testrail(self):
@@ -79,23 +84,10 @@ class Uis_tools(object):
 			except Exception as ex:
 				loger.file_log(text = 'Did not initialization testrail' , text_type = 'ERROR  ')
 
-	def init_browser(self, product_type = 'ch'):
-	# открывает объект Браузера, доделать выбор браузера и добавить настройку полноэкранности
-		env = {'ch': webdriver.Chrome, 'ff': webdriver.Firefox}
-		try:
-			self.driver = env.get(product_type)()
-			self.driver.maximize_window()
-			print(dir(webdriver))
-			return self.driver
-		except Exception as ex:
-			# print(ex)
-			loger.file_log(text = 'Did not initialization Browser' , text_type = 'ERROR  ')
-
-	def close_browser(self):
-	# закрывает открытый объект Браузера 
-		if self.driver:
-			self.driver.quit()
-			self.driver = None
+	@property
+	def get_driver(self):
+	#(C) возвращает экземпляр Драйвера, используется в тексте user case для обращения к созданному объекту драйвера
+ 		return self.driver
 
 	def sleep_function(self, timeout = 120):
 		time.sleep(timeOut)
@@ -112,7 +104,6 @@ class Uis_tools(object):
 		for r  in p.imap_unordered(lambda f: f(),[a,b,c]):
 			if r:
 				break
-
 		print(results)
 		p.close()
 
@@ -238,30 +229,41 @@ class Uis_tools(object):
 			try:
 				driver.execute_script("return arguments[0].scrollIntoView();", page_object)
 			except Exception as ex:
-				print(ex)
+				print('test in page_scrolling_to_the_element:  ',ex)
 	
-	def elements_list (self, object_type = 'div', search_type = 'contains', mask = 'li',  timeOut = 10):
-	# создает список элементов по определенной маске, возвращает количество найденных эллементов и сами элементы в виде готовывых объектов
-		result = [None,[None]]
+	def elements_list (self, object_type = 'div', search_type = 'contains', mask = 'li', timeOut = 10):
+	# (C!)создает список элементов по определенной маске, возвращает количество найденных эллементов и сами элементы в виде готовывых объектов
+		result = [None,[None], None]
 		driver = self.driver
 		step = 1
+		looking_type = []
 		while step <= timeOut:
 			try:
 				# оставлено для дебага
 				# print("//" + str(object_type) + "[" + str(search_type) + "(@" + str(mask) + ")]")
 				elements = driver.find_elements_by_xpath("//" + str(object_type) + "[" + str(search_type) + "(@" + str(mask) + ")]")
+				looking_type.append('x-path')
 			except:
-				pass	
+				pass
+			if search_type == None:
+				try:
+					elements = driver.find_elements_by_css_selector(mask)
+				except Exception as ex:
+					print('test in elements_list: ',ex)
 			try:
 				if elements and len(elements) != 0:
-					result = [len(elements), elements]
+					visible_elements = []
+					for el in elements:
+						if el.is_displayed():
+							visible_elements.append(el)
+					result = [len(visible_elements), visible_elements, looking_type]
 					break					
 			except:
 				pass
 			step += 1
 			time.sleep(1)
 		return result
-	
+
 	def abort_test(self):
 	# корректное прерывание теста
 		self.close_browser()
@@ -293,9 +295,7 @@ class Uis_tools(object):
 				current_object[2].clear()
 				current_object[2].send_keys(str(text))
 		except Exception as ex:
-			# print(ex)
 			loger.file_log(text = 'can not change data in the element ' + str(element_definition) , text_type = 'ERROR  ')
-			# print('test')
 			if breakONerror == True:
 				self.abort_test()
 	
@@ -354,7 +354,7 @@ class Uis_tools(object):
 					inner_index += 1
 					item_menu.remove(item_menu[0])
 		except Exception as ex:
-			print(ex)
+			print('lk_sidemenu_navigation:  ', ex)
 		time_index = 0
 		while True: 
 		# ищем пункт меню котовый к нажатию
@@ -365,6 +365,7 @@ class Uis_tools(object):
 				if elem.text == item_menu[0]:
 					current_elems.append(elem)
 			if len(current_elems) == 1:
+				# self.page_scrolling_to_the_element(page_object = current_elems[0])
 				self.click_element(element_definition = current_elems[0], timeOut = timeOut)
 				loger.file_log(text = 'Was clicked side menu item: ' + str(current_elems[0].text), text_type = 'SUCCESS')
 				inner_index += 1
@@ -399,35 +400,84 @@ class Uis_tools(object):
 			time_index += 1
 
 	def top_menu_navigation(self, tab_name = None, timeOut = 20):
-	# навигация по табам (вкладки вверху, активные выделяются зеленым)
-		elem_list = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'id, \'tab-\'', timeOut = timeOut)[1]
-		elem_list_2 = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'data-ref, \'btnInnerEl\'', timeOut = timeOut)[1]
-		tab_names = []
-		element_counter = 0
-		if tab_name != None:
+	#(С!) навигация по табам (вкладки вверху, активные выделяются зеленым)
+		# ищем элементы\табы на странице (старые и новые) условием выхода из цикла будет нахождение любых
+		timer_index = 0
+		items_index = 0
+		while True:
+			# старое меню
 			try:
-				for el in elem_list:
-					tab_names.append(el.text)
-					if el in elem_list_2 and el.is_displayed() and str(el.text) == str(tab_name):
+				old_elems = self.elements_list(search_type = None, mask = 'span[id*=-tab] > span[id$=btnInnerEl]', timeOut = 1)
+				if old_elems[0] != None:
+					items_index += 1
+			except:
+				pass
+			# новое меню
+			try:
+				new_elems = self.elements_list(search_type = None, mask = 'span[class=x-tab-inner]', timeOut = 1)
+				if new_elems[0] != None:
+					items_index += 1
+			except:
+				pass
+
+			if items_index != 0 :
+				elems = new_elems[1] + old_elems[1] 
+				break
+
+			if timer_index >= timeOut:
+				loger.file_log(text = 'No tab\'s navigation buttons at page', text_type = 'ERROR  ')
+				elems = []
+				break
+			timer_index += 1
+		
+		if tab_name != None and len(elems) != 0:
+			for el in elems:
+				try:
+					if el.is_displayed() and str(el.text) == str(tab_name):
 						try:
-							tab_before = str(self.get_active_top_tab)
-							el.click()
-							element_counter += 1
-							loger.file_log(text = 'Click was made at: ' + str(tab_name) + ', active tab was switched from '+ str(tab_before) +' to ' + str(self.get_active_top_tab), text_type = 'SUCCESS')
+							# tab_before = str(self.get_active_top_tab)
+							self.click_element(element_definition = el,  breakONerror = True)
+							try:
+								print(self.get_active_top_tab)
+							except:
+								pass
+							break
 						except Exception as ex:
-							print(ex)
-				if str(tab_name) not in tab_names:
-					loger.file_log(text = 'Tab name is wrong: ' + str(tab_name), text_type = 'ERROR  ')
-				if element_counter >= 2:
-					loger.file_log(text = 'This element was found' + str(element_counter) + 'times. Check this scenario by hands.', text_type = 'WARNING')
-			except Exception as ex:
-				print(ex)			
+							pass
+				except:
+					pass
 		else:
-			loger.file_log(text = 'You used method without  tab name, nothing was done', text_type = 'WARNING')
+			loger.file_log(text = 'You used method without tab name or such elements were not found, nothing was done', text_type = 'WARNING')
+
+		# elem_list = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'id, \'tab-\'', timeOut = timeOut)[1]
+		# elem_list_2 = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'data-ref, \'btnInnerEl\'', timeOut = timeOut)[1]
+		# tab_names = []
+		# element_counter = 0
+		# if tab_name != None:
+		# 	try:
+		# 		for el in elem_list:
+		# 			tab_names.append(el.text)
+		# 			if el in elem_list_2 and el.is_displayed() and str(el.text) == str(tab_name):
+		# 				try:
+		# 					tab_before = str(self.get_active_top_tab)
+		# 					el.click()
+		# 					element_counter += 1
+		# 					loger.file_log(text = 'Click was made at: ' + str(tab_name) + ', active tab was switched from '+ str(tab_before) +' to ' + str(self.get_active_top_tab), text_type = 'SUCCESS')
+		# 				except Exception as ex:
+		# 					print(ex)
+
+		# 		if str(tab_name) not in tab_names:
+		# 			loger.file_log(text = 'Tab name is wrong: ' + str(tab_name), text_type = 'ERROR  ')
+		# 		if element_counter >= 2:
+		# 			loger.file_log(text = 'This element was found' + str(element_counter) + 'times. Check this scenario by hands.', text_type = 'WARNING')
+		# 	except Exception as ex:
+		# 		print(ex)			
+		# else:
+		# 	loger.file_log(text = 'You used method without  tab name, nothing was done', text_type = 'WARNING')
 
 	@property
 	def get_active_top_tab(self):
-	# ищем активную вкладку на странице (зеленая сверху страницы), этот метод без внутренней проверки, считаем что таковые вкладки есть
+	# (! нужно переписать для новой менюшки) ищем активную вкладку на странице (зеленая сверху страницы), этот метод без внутренней проверки, считаем что таковые вкладки есть
 		elem_list = self.elements_list(object_type = 'a',  search_type = 'contains',  mask = 'class, \'x-tab-active\'')[1]	
 		active_tab = []
 		try:
@@ -573,12 +623,12 @@ class Uis_tools(object):
 
 	def login_to(self, url = None, user = None, password = None, breakONerror = True):
 	# логин в систему
-		try:
-			self.init_browser()
-		except:
-			loger.file_log(text = 'initialization Browser fail', text_type = 'ERROR  ')
-			if breakONerror == True:
-				abort_test()			
+		# try:
+		# 	self.init_browser()
+		# except:
+		# 	loger.file_log(text = 'initialization Browser fail', text_type = 'ERROR  ')
+		# 	if breakONerror == True:
+		# 		abort_test()			
 		try:
 			self.goto(url, breakONerror)			
 		except Exception as ex:
@@ -617,112 +667,6 @@ class Uis_tools(object):
 			time_index += 1	
 
 # обработка личного кабинета - Консультант - Общие настройки - Шаблоны сообщений
-	@property
-	def general_settings_get_templates_list(self):
-	# (C) поиск записай на странице выбирает формирует список объектов из элементов в таблице шаблонов ответа, в списке только отображенные на странице элементы
-		return self.elements_list(object_type = 'table', search_type = 'contains', mask = 'id, \'commonsettings-page-tableview-\'')
-
-	def general_settings_add_template(self, template_name = None, timeOut = 120):
-	# (C!) добавление нового шаблона, успешность проверяется по изменению количества записей на странице (в разработке!!!)
-		# получаем количество шаблонов
-		before_adding_template_values_count = self.get_total_list_values_count()[0]
-		# добавляем новый шаблон
-		if template_name != None:
-			# ищем поле для ввода (поиск нужен потому, что все эллементы кроме страницы логина динамические)
-			elems = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'textfield-\'')
-			print(elems[0])
-			for elem in elems[1]:
-				try:
-					if elem.get_attribute('data-ref') == 'inputEl':
-						self.change_value(element_definition = elem, text = template_name)
-				except Exception as ex:
-					loger.file_log(text = 'Can\'t type the template name', text_type = 'ERROR  ')
-			# нажимаем кнопку добавить
-			# elems = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'ul-mainbutton\'')	
-			# print(elems)	
-			elems_test = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'class, \'x-btn x-unselectable x-box-item x-btn-ul-main-medium\'')
-			# elems_test = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'commonsettings-page-ul-mainbutton-\'')
-			elems_test[1][0].click()
-		# проверяем, что значение общего количества шаблонов изменилось
-		time_index = 0
-		while True:
-			value_of_teamplates_after_chang = self.get_total_list_values_count()[0]
-			if int(value_of_teamplates_after_chang) - int(before_adding_template_values_count) == 1:
-				break
-			if time_index >= timeOut:
-				loger.file_log(text = 'Templates counter does not correct. It is: ' + str(value_of_teamplates_after_chang), text_type = 'ERROR  ')
-				break			
-			time.sleep(1)
-			time_index += 1	
-
-	def general_settings_delete_templates(self, template_name, timeOut = 120):
-	# (C) удаляет шаблон по имени/ ищет шаблон с первой страницы
-		paging = 1 # если страниц более одной
-		# считаем сколько всего шаблонов есть до удаления
-		before_deleting_template_values_count = self.get_total_list_values_count()[0]
-		# ТУТ будет цикл, если элемент есть на отображаемой странице то удаляем. если нет, то переходим на следующую и так до последней страницы
-		value_parametrs = []
-		# получаю список всех страниц и перехожу на первую (для случая многократного удаления на разных страницах)
-		pages_with_templates = self.get_paging_templates_list
-		if len(pages_with_templates[0]) > 1:
-			if self.get_active_page_in_list[0][0] != pages_with_templates[0][0]:
-				self.choose_paging_value(page_name = pages_with_templates[0][0])
-		while True:
-			# получаю список всех страниц доступных для перехода
-			pages_with_templates = self.get_paging_templates_list
-			# получаю список всех шаблонов отображенных на текущей странице
-			list_templates_elements = self.general_settings_get_templates_list
-			# находим соответствующий эллемент и получаем номер таблицы в которой он хранится и его собственный номер (реализовать проверки!!!)
-			for element in list_templates_elements[1]:
-				if element.text == str(template_name):
-					value_parametrs.append(element.get_attribute('id').split('-')[3])
-					value_parametrs.append(element.get_attribute('id').split('-')[5])
-					break
-			# если на текущей странице ничего не нашлось, то переходим на следующую. Если нашлось, то выходим из цикла поиска выполняем удаление
-			# если страница последняя, а результат отрицательный то тоже выходим	
-			if len(value_parametrs) == 0:
-				# создаю список с номерами страниц (номера могут быть только int)
-				numbers = []
-				for number in pages_with_templates[0]:
-					try:
-						numbers.append(int(number))
-					except Exception as ex:
-						pass
-				# выполняю переход на след страницу для поиска элемента
-				if paging in numbers:
-					self.choose_paging_value(page_name = paging)
-					paging += 1
-					time.sleep(1)
-				else:
-					# обшли все доступные страницы, но шаблона не нашли
-					break
-			else:
-				# удаляемый шаблон найден, выходим из поиска
-				break		
-		if value_parametrs != []:
-			self.click_element(element_definition = lk_elements.BUTTON('remove_template', mask = value_parametrs), timeOut = timeOut)
-			# подтверждение удаления (нажатие на кнопку: Да)
-			yes_button = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'ul-mainbutton-yes-\'')
-			for item in yes_button[1]:
-				if 'btnInnerEl' in item.get_attribute('id'):
-					self.click_element(element_definition = item, timeOut = timeOut)
-					break
-			# ожидание удаления, если количество элементов на странице изменилось, то объект удалён
-			time_index = 0
-			while True:
-				value_of_teamplates_after_chang = self.get_total_list_values_count()[0]
-				if int(before_deleting_template_values_count) - int(value_of_teamplates_after_chang) == 1:
-					loger.file_log(text = 'Template: ' + str(template_name) + ', was successfully deleted', text_type = 'SUCCESS')
-					break
-				
-				if time_index >= timeOut:
-					loger.file_log(text = 'Counter of the Templates wasn\'t changed. Deleting of the ' + str(template_name) + ' failed', text_type = 'ERROR  ')
-					break			
-				time.sleep(1)
-				time_index += 1
-		else:
-			loger.file_log(text = 'Can\'t find such template name: ' + str(template_name), text_type = 'ERROR  ')
-	
 	def choose_paging_value(self, page_name = None, timeOut = 120, breakONerror = True):
 	# (C) нажимает на определенное значение страничной навигации
 		# пытаемся определить на какой странице находимся
@@ -772,10 +716,6 @@ class Uis_tools(object):
 				break	
 			time.sleep(1)
 			time_index += 1	
-
-
-
-
 
 		# try:
 		# 	if active_template == self.get_active_page_in_list[0]:
@@ -868,72 +808,25 @@ class Uis_tools(object):
 			# 		self.click_element(element_definition = item, timeOut = timeOut)
 			# 		break
 
-	@property
-	def define_kapcha_status(self):
-	# (С)определяем статус выключателя капча: True включена, False выключена, считаем что элемент уже есть на странице
-	# если элемент не успел отрисоваться то будет
-		# находим все однотиповые эллементы (текст на странице с переключателем)
-		id_is = None
-		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'cm-switchbox-\'')
-		if needed_elements != [None,[None]]:
-		# ищем динамическую часть id для переключателя капчи	
-			for needed_element in needed_elements[1]:
-				try:
-					if 'Защита от спама (капча):' in needed_element.text:
-						id_is = needed_element.get_attribute('id').split('-')[5]
-						break
-				except Exception as ex:
-					print(ex)					
-			if id_is != None:
-				# кидаем консольную команду и получаем статус кнопки (хорошо б что-нить еще придумать сюда вместо такого способа)
-				kapcha_status = self.execute_console_command(command = "return window.Ext.getCmp('channels-page-cm-switchbox-is_captcha_enabled-" + str(id_is) + "').getValue()")
-		return kapcha_status
 
-	def switch_kapcha_status(self, timeOut = 120):
-	# (С!)переключаем выключатель капчи
-		# определяем текущий статус капчи, если статус определить не удалось считаем что капчи нет на странице
-		timer = 0
-		while True:
-			try:
-				previus_kapcha_status = self.define_kapcha_status
+# (!)обработка личного кабинета - Консультант - Каналы - Обратный звонок
+	def channels_back_call_choose_of_the_schedule(self, graphik_name = None):
+	# (!С) выбираем график показа виджет обратного звонка/ значение None соответствует любое значение
+	# проверяем что установлено сейчас
+	  # ищем id элемента с текстом: График показа
+		lable_item = self.elements_list(object_type = 'label', search_type = 'contains', mask = 'class, \'x-form-item-label x-form-item-label-ul\'')
+		for index in lable_item[1]:
+			if 'График показа:' == str(index.text):
+				current_id = index.get_attribute('id').split('-')[4]
 				break
-			except:
-				pass
+		# определяем, что написано в поле
+		if current_id:
+			print('1')
+			print(self.displayed_element(element_definition =  lk_elements.BUTTON('cons_back_call_schedule_drop_down_btn',mask = current_id), timeOut = 3))
+	# если значение есть то проверяем доступно оно для выбора или нет, если значение нет то выбираем любое
+	# if 
+	# устанавливаем значение
+	# проверяем сменилосьли значение
+	# проверяем активно оно сейчас лили нет и возвращаем это значение.
 
-			if timer >= timeOut:
-				loger.file_log(text = 'Can\'t switch tumbler of the  kapcha, Can\'t find kapcha at page', text_type = 'ERROR  ')
-				break
 
-			time.sleep(1)
-			timer += 1
-
-		# меняем статус
-		# находим все однотиповые эллементы (текст на странице с переключателем)
-		id_is = None
-		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'cm-switchbox-\'')
-		if needed_elements != [None,[None]]:
-		# ищем динамическую часть id для переключателя капчи	
-			for needed_element in needed_elements[1]:
-				try:
-					if 'Защита от спама (капча):' in needed_element.text:
-						id_is = needed_element.get_attribute('id').split('-')[5]
-						break
-				except Exception as ex:
-					print(ex)					
-			if id_is != None:
-				self.click_element(element_definition = lk_elements.SELECT('lk_kons_kapcha_select', mask = id_is))
-		# после смены проверяем, что статус сменен и не равен старому
-		timer = 0
-		while True:
-			if previus_kapcha_status != self.define_kapcha_status:
-				loger.file_log(text = "Kapcha was changed", text_type = 'SUCCESS')
-				break
-			if timer >= timeOut:
-				loger.file_log(text = 'Can\'t switch tumbler of the  kapcha', text_type = 'ERROR  ')
-				break
-			timer += 1
-			time.sleep(1)
-		# возвращаем новый статус капчи
-
-	def konsultant_back_phone(self, kaptcha = False):
-		pass
