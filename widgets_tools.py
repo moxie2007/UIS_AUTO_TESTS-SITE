@@ -249,7 +249,11 @@ class Wg_tools(tools.Uis_tools):
 		# except Exception as ex:
 		# 	print('nexp', ex)
 
+	def black_list_add_new_address(self, ip_idress, comment):
+	# !(C) добавляем новый IP в черный список (предположительно )
 
+		# определяем на какой странице находимся
+		return self.get_header_text
 # консультант -- каналы -- обратный звонок\Сайтфон
 	@property
 	def define_kapcha_status(self):

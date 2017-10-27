@@ -565,7 +565,6 @@ class Uis_tools(start_uis_test.Global_unit):
 				result[1][elem.text] = elem
 		return result
 
-
 	@property
 	def alert_preset(self):
 	# (!C) возвращает количество и список объектов отображаемых иконок с ошибками если таковых нет то возвращает None
