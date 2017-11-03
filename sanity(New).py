@@ -51,17 +51,19 @@ wg = widgets_tools.Wg_tools(driver)
 
 # тест в консультант -- общие настройки -- шаблоны сообщений
 tools.login_to(url = configLK.get_login_url, user = configLK.get_user_name, password = configLK.get_pass)
-tools.switch_env(selected_element = 'lk_env_select', server_name = 'siteow1.webdev.uiscom.ru')
-tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Общие настройки"],  timeOut = 120)
+tools.switch_env(selected_element = 'lk_env_select', server_name = 'sitecw1.webdev.uiscom.ru')
+tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Распределение обращений"],  timeOut = 120)
 
-tools.top_menu_navigation(tab_name = 'Черный список')
+# tools.top_menu_navigation(tab_name = 'Черный список')
 # wg.general_settings_add_template(template_name = 'кузнецов_тест', timeOut = 120)
 # wg.general_settings_edit_template(template_name = 'кузнецов_тест', new_name = 'my test', timeOut = 120)
 # wg.general_settings_delete_templates(template_name = 'my test')
 
-print(wg.black_list_add_new_address(1,2))
+# print(wg.black_list_add_new_address(ip_idress = "10.10.1.123", comment = "2"))
+print(wg.define_chats_distribution_state)
+print(wg.setting_distribution_of_chats())
 main_unit.close_browser
-time.sleep(2)
+
 
 print('OVER!')
 loger.file_log(text = 'Finish sanity test', text_type = 'SUCCESS', test_case_id = 45440, comment = 'Finish sanity test. at ' + str(datetime.utcnow()))

@@ -7,6 +7,14 @@ class LK(object):
 		# окно ввода пароля
 		if element == 'login_password':
 			return ["/html/body/div/div/form/input[2]", None]
+	# ЛК-СЕРВИСЫ-Консультант
+		# Общие настройки-Черный список- поле ввода ip	
+		if element == 'konsultant_black_list_add_ip':
+			return ['//*[@id="commonsettings-page-textfield-ip-' + str(mask) + '-inputEl"]', None]
+		# Общие настройки-Черный список- поле ввода комментарий	
+		if element == 'konsultant_black_list_add_comment':
+			return ['//*[@id="commonsettings-page-textfield-description-' + str(mask) + '-inputEl"]', None]
+	
 	def BUTTON(self,element, mask = None, userType = None):
 	# кнопка логина
 		if element == 'btn_login':
@@ -43,6 +51,8 @@ class LK(object):
 			return['//*[@id="channels-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]/span/span[3]', None]
 		if element == 'test':
 			return['channels-page-cm-switchbox-is_captcha_enabled-' + str(mask), None]
+		if element == 'lk_kons_chats_distribution':
+			return['//*[@id="chatprocessing-page-cm-switchbox-is_chat_distribution_enabled-' + str(mask) + '-inputEl"]', None]
 
 	                # //*[@id="channels-page-cm-switchbox-is_captcha_enabled-1136-inputEl"]/span/span[1]
 	# боковое меню личного кабинета, это не раьботает на ранней стадии разработки тестов не учтена динамика

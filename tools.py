@@ -130,8 +130,6 @@ class Uis_tools(start_uis_test.Global_unit):
 		driver = self.driver
 		try:
 			result = driver.execute_script(command)
-			# driver.execute_script("return document.title").assertTrue(type(result) == unicode or type(result) == str,"The type of the result is " + str(type(result))).assertEqual("XHTML Test Page", result)
-			# driver.execute_script(command)
 		except Exception as ex:
 			loger.file_log(text = 'Can\'t do this (' + str(command) + ').\n command error is:' + str(ex), text_type = 'ERROR  ')
 			result = None

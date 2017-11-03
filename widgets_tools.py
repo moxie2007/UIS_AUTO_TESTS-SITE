@@ -1,3 +1,4 @@
+import sys, time
 import tools, start_uis_test, pageElements
 import loger 
 from loger import Loger as loger
@@ -181,7 +182,6 @@ class Wg_tools(tools.Uis_tools):
 
 
 
-
 			# # подтверждение удаления (нажатие на кнопку: Да)
 			# yes_button = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'ul-mainbutton-yes-\'')
 			# for item in yes_button[1]:
@@ -249,11 +249,39 @@ class Wg_tools(tools.Uis_tools):
 		# except Exception as ex:
 		# 	print('nexp', ex)
 
-	def black_list_add_new_address(self, ip_idress, comment):
-	# !(C) добавляем новый IP в черный список (предположительно )
+	def black_list_add_new_address(self, ip_idress, comment, breakONerror = True):
+	# !(C) добавляем новый IP в черный список.
+		# запоминаем количество уже имеющихся записей
+		addresses_count_before_adding = self.get_total_list_values_count()[0]
+		# вводим IP
+		# ищем контейнер с текстом: Добавить шаблон, что - бы получить id (такое значение должно быть только одно).
+		text_items = []
+		for item in self.elements_list(search_type = None, mask = 'div[id^=commonsettings-page-container-] * label')[1]:
+			try:
+				if (item.text) != 0:
+					text_items.append([item.text, item])
+			except Exception as ex:
+				print('widgets_tools.black_list_add_new_address:  ', ex)
+		if len(text_items) == 1:
+			id_mask = text_items[0][1].get_attribute('id').split('-')[4]
+		else:
+			loger.file_log(text = 'Can\'t add new ip to the black list. Labels count should be one, but we have: ' + str(len(text_items)), text_type = 'ERROR  ')
+			self.close_browser()
+			loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+			sys.exit()	
+		# вводим ip и коментарий
+		self.change_value(element_definition = lk_elements.INPUT("konsultant_black_list_add_ip", mask = id_mask), text = ip_idress)
+		self.change_value(element_definition = lk_elements.INPUT("konsultant_black_list_add_comment", mask = str(int(id_mask) + 1)), text = comment)
+		time.sleep(5)
+
+
+		# нажимаем кнопку добавить
+		# проверяем результат (изменилось значение: Всего записей)
+
 
 		# определяем на какой странице находимся
-		return self.get_header_text
+		return [id_mask]
+
 # консультант -- каналы -- обратный звонок\Сайтфон
 	@property
 	def define_kapcha_status(self):
@@ -296,7 +324,7 @@ class Wg_tools(tools.Uis_tools):
 		# находим все однотиповые эллементы (текст на странице с переключателем)
 		id_is = None
 		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'cm-switchbox-\'')
-		if needed_elements != [None,[None]]:
+		if needed_elements != [None,[None],None]:
 		# ищем динамическую часть id для переключателя капчи	
 			for needed_element in needed_elements[1]:
 				try:
@@ -323,3 +351,58 @@ class Wg_tools(tools.Uis_tools):
 # консультант -- Внешний вид
 
 # консультант -- Распределение обращений
+	@property
+	def define_chats_distribution_state(self):
+	# (!C) метод определяющий Включено\Выключено распределение чатов на странице Распределение обращений
+		# находим динамическую часть id переключателя (по тексту перед выключателем)
+		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'chatprocessing-page-cm-switchbox-is_chat_distribution_enabled-\'')
+		if needed_elements != [None,[None], None]:
+			for needed_element in needed_elements[1]:
+				try:
+					if 'Настройка распределения чатов' in needed_element.text:
+						id_is = needed_element.get_attribute('id').split('-')[5]
+						break
+				except Exception as ex:
+					print('setting_distribution_of_chats:  ', ex)
+			if id_is != None:
+				# кидаем консольную команду и получаем статус кнопки (хорошо б что-нить еще придумать сюда вместо такого способа)
+				status_of_distribution_of_chats = self.execute_console_command(command = "return window.Ext.getCmp('chatprocessing-page-cm-switchbox-is_chat_distribution_enabled-" + str(id_is) + "').getValue()")
+			else:
+				loger.file_log(text = 'Can\'t define button status', text_type = 'ERROR  ')
+				self.close_browser()
+				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+				sys.exit()
+		return [str(status_of_distribution_of_chats), str(id_is)]
+
+	def setting_distribution_of_chats(self, to_state = False, timeOut =120):
+	# (C) метод Вкл\Выкл распределение чатов
+		method_state = []
+		current_state = self.define_chats_distribution_state
+		# определяем состояние переключателя (id находим по тексту перед выключателем)
+		if str(to_state) == str(current_state[0]):
+			loger.file_log(text = 'Button already in necessary state', text_type = 'SUCCESS')
+		else:
+			# выполняем нажатие на кнопку
+			self.click_element(element_definition = lk_elements.SELECT('lk_kons_chats_distribution', mask = current_state[1]))
+			# проверяем, что переключение произошло
+			time_stamp = 0
+			while True:
+				if str(self.define_chats_distribution_state[0]) == str(to_state):
+					loger.file_log(text = 'Chats distribution state was changed to the: ' + str(to_state), text_type = 'SUCCESS')
+					method_state.append(str(True))
+					break
+				if time_stamp >= timeOut:
+					loger.file_log(text = 'Click to the button was done but state wasn\'t changed', text_type = 'ERROR  ')
+					method_state.append(str(False))
+					break			
+				time.sleep(1)
+				time_index += 1
+		return method_state
+
+
+
+
+
+
+	
+
