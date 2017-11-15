@@ -663,6 +663,23 @@ class Uis_tools(start_uis_test.Global_unit):
 				sys.exit()
 			time.sleep(1)
 			time_index += 1	
+# ______________________________________________________________________________________________
+	def account_click(self):
+		elems = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'class, \'x-btn-inner x-btn-inner-ul-linklike-medium\'')
+		for item in elems[1]:
+			if 'Администратор' in item.text:
+				self.click_element(element_definition = item)
+		time.sleep(5)
+		new_ellems = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'class, \'x-menu-item-text x-menu-item-text-ul x-menu-item-indent\'')
+		for new_one in new_ellems[1]:
+			try:
+				print(new_one.text)
+				if 'Аккаунт' in new_one.text:
+					self.click_element(element_definition = new_one)
+					break
+			except Exception as ex:
+				peint(ex)
+
 
 
 

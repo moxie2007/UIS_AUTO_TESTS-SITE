@@ -14,6 +14,7 @@ class LK(object):
 		# Общие настройки-Черный список- поле ввода комментарий	
 		if element == 'konsultant_black_list_add_comment':
 			return ['//*[@id="commonsettings-page-textfield-description-' + str(mask) + '-inputEl"]', None]
+
 	
 	def BUTTON(self,element, mask = None, userType = None):
 	# кнопка логина
@@ -53,6 +54,10 @@ class LK(object):
 			return['channels-page-cm-switchbox-is_captcha_enabled-' + str(mask), None]
 		if element == 'lk_kons_chats_distribution':
 			return['//*[@id="chatprocessing-page-cm-switchbox-is_chat_distribution_enabled-' + str(mask) + '-inputEl"]', None]
+	# Личный кабинет настройки консультант - Внешний вид
+		# выпадающий список для пункта меню: Положение
+		if element == 'lk_kons_view_dd':
+			return['//*[@id="uisettings-page-cm-widgetpositioncombo-banner_place-' + str(mask) + '-inputEl"]', None] 	
 
 	                # //*[@id="channels-page-cm-switchbox-is_captcha_enabled-1136-inputEl"]/span/span[1]
 	# боковое меню личного кабинета, это не раьботает на ранней стадии разработки тестов не учтена динамика

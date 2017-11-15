@@ -10,7 +10,7 @@ class Wg_tools(tools.Uis_tools):
 	def __init__(self, driver):
 		self.driver = driver
 
-# консультант -- Общие настройки -- Шаблоны сообщений
+#(! Этой опции больше нет все методы перенести и перепроверить) консультант -- Общие настройки -- Шаблоны сообщений
 	@property
 	def general_settings_get_templates_list(self):
 	# (C) поиск записай на странице выбирает формирует список объектов из элементов в таблице шаблонов ответа, в списке только отображенные на странице элементы
@@ -375,7 +375,7 @@ class Wg_tools(tools.Uis_tools):
 		return [str(status_of_distribution_of_chats), str(id_is)]
 
 	def setting_distribution_of_chats(self, to_state = False, timeOut =120):
-	# (C) метод Вкл\Выкл распределение чатов
+	# (!C) метод Вкл\Выкл распределение чатов (метод будет перенесен в другое место).
 		method_state = []
 		current_state = self.define_chats_distribution_state
 		# определяем состояние переключателя (id находим по тексту перед выключателем)
@@ -398,6 +398,60 @@ class Wg_tools(tools.Uis_tools):
 				time.sleep(1)
 				time_index += 1
 		return method_state
+
+# Консультант - Внешний вид
+	def cons_change_widget_position(self, place = 'br', open_dd_by = 'txt', timeOut = 120):
+	# (C) исходим из того, что вкладка: Внешний вид, уже открыта
+	# значения отображения: (br:"снизу справа", bl:"снизу слева", cr:"по центру справа", cl:"по центру слева", ur:"сверху справа", ul:"сверху слева")
+	# значения по нажатию на какой эллемент будет открываться список, определяющий где будет располагаться виджет.(значения: {'txt':'text','dd':'dropdown'})
+		current_element = []
+		positions = {'br':"снизу справа", 'bl':"снизу слева", 'cr':"по центру справа", 'cl':"по центру слева", 'ur':"сверху справа", 'ul':"сверху слева"}
+		# на ходим текст для выпадающего списка со значениями, которые определяют положение виджета на странице
+		elements = self.elements_list(object_type = 'label', search_type = 'contains', mask = 'class, \'x-form-item-label x-form-item-label-ul   x-unselectable\'')
+		for element in elements[1]:
+			try:
+				if 'Положение на сайте' in element.text:
+					current_element.append(element)
+			except Exception as ex:
+				print('Error in cons_change_widget_position: ' + str(ex))
+		if len(current_element) != 1:
+			loger.file_log(text = 'Was found more than one necessary element at View widget page, it\'s wrong', text_type = 'ERROR  ')
+		else:
+			# определяем эллементы для нажатия
+			type_click = {'txt':current_element[0],'dd':self.displayed_element(element_definition = lk_elements.SELECT('lk_kons_view_dd', mask = current_element[0].get_attribute('id').split('-')[5]))[2]}
+			# проверяем какое значение уже выбрано и если нужно, то выбираем новое, если не нужно то не меняем.
+			current_value =  type_click.get('dd').get_attribute('value')
+			if positions.get(place) == current_value:
+				loger.file_log(text = 'Necessary value: ' + str(positions.get(place)) + ' already chosen. We have no necessary to change', text_type = 'SUCCESS')
+			else:
+				# нажимаем на элемент
+				self.click_element(element_definition = type_click.get(open_dd_by))
+				# проверяем, что список открыт
+				dropdown_items = self.elements_list(object_type = 'li', search_type = 'contains', mask = 'class, \'x-boundlist-item\'')[1]
+				for item in dropdown_items:
+					if positions.get(place) == item.text:
+						self.click_element(element_definition = item)
+						break
+				# проверяем, что переключение произошло и выводим в лог результат
+				time_index = 0
+				while time_index <= timeOut:
+					if current_value != type_click.get('dd').get_attribute('value'):
+						loger.file_log(text = 'Necessary value: ' + str(positions.get(place)) + ', was chosen', text_type = 'SUCCESS')
+						result = True
+						break
+					if time_index <= timeOut:
+						loger.file_log(text = 'Necessary value: ' + str(place) + ', was not chosen. current selection: ' + str(current_value), text_type = 'ERROR  ')
+						result = False
+						break
+					time.sleep(1)
+					time_index += 1
+		# возвращаем статус смены. и текущий выбор
+		return {'result':result,'result_place':type_click.get('dd').get_attribute('value')}
+
+
+
+
+
 
 
 
