@@ -348,8 +348,6 @@ class Wg_tools(tools.Uis_tools):
 			time.sleep(1)
 		# возвращаем новый статус капчи
 
-# консультант -- Внешний вид
-
 # консультант -- Распределение обращений
 	@property
 	def define_chats_distribution_state(self):
@@ -400,7 +398,7 @@ class Wg_tools(tools.Uis_tools):
 		return method_state
 
 # Консультант - Внешний вид
-	def cons_change_widget_position(self, place = 'br', open_dd_by = 'txt', timeOut = 120):
+	def cons_view_change_widget_position(self, place = 'br', open_dd_by = 'txt', timeOut = 120):
 	# (C) исходим из того, что вкладка: Внешний вид, уже открыта
 	# значения отображения: (br:"снизу справа", bl:"снизу слева", cr:"по центру справа", cl:"по центру слева", ur:"сверху справа", ul:"сверху слева")
 	# значения по нажатию на какой эллемент будет открываться список, определяющий где будет располагаться виджет.(значения: {'txt':'text','dd':'dropdown'})
@@ -448,8 +446,38 @@ class Wg_tools(tools.Uis_tools):
 		# возвращаем статус смены. и текущий выбор
 		return {'result':result,'result_place':type_click.get('dd').get_attribute('value')}
 
+	@property
+	def cons_view_define_animation_state(self):
+	# (GC) определяем состояние контрола: Анимация, True=включено, False=выключено
+		result = {'status_of_animation':None,'id_is':None}
+		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'uisettings-page-cm-switchbox-is_animation_enabled-\'')
+		
+		if needed_elements != [None,[None], None]:
+			for needed_element in needed_elements[1]:
+				try:
+					if 'Анимация' in needed_element.text:
+						result['id_is'] = needed_element.get_attribute('id').split('-')[5]
+						break
+				except Exception as ex:
+					print('setting_distribution_of_chats:  ', ex)
+			
+			if result.get('id_is') != None:
+				# кидаем консольную команду и получаем статус кнопки (хорошо б что-нить еще придумать сюда вместо такого способа)
+				result['status_of_animation'] = self.execute_console_command(command = "return window.Ext.getCmp('uisettings-page-cm-switchbox-is_animation_enabled-" + str(result.get('id_is')) + "').getValue()")
+			else:
+				loger.file_log(text = 'Can\'t define button status', text_type = 'ERROR  ')
+				self.close_browser
+				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+				sys.exit()
+		else:
+			loger.file_log(text = 'Can\'t find Animation text at page' , text_type = 'ERROR  ')
+			self.close_browser
+			loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+			sys.exit()
+		return result
 
-
+	def cons_view_change_animation_lable_stat(self):
+		pass
 
 
 

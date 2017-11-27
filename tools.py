@@ -134,7 +134,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			loger.file_log(text = 'Can\'t do this (' + str(command) + ').\n command error is:' + str(ex), text_type = 'ERROR  ')
 			result = None
 			if breakONerror is True:
-				self.close_browser()
+				self.close_browser
 				loger.file_log(text = 'Finish sanity test with Error:', text_type = 'SUCCESS')
 				sys.exit()
 		return result
@@ -195,7 +195,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		driver = self.driver
 		desired_element = None
 		state = False
-		elementTyte = None
+		element_tyte = None
 		step = 1
 		while step <= timeOut:
 			try:
@@ -208,7 +208,7 @@ class Uis_tools(start_uis_test.Global_unit):
 				if desired_element.is_displayed():
 					state = True
 					try:
-						elementTyte = desired_element.tag_name
+						element_tyte = desired_element.tag_name
 					except Exception as ex:
 						pass
 					break
@@ -217,8 +217,8 @@ class Uis_tools(start_uis_test.Global_unit):
 				pass
 			step += 1
 			time.sleep(1)
-
-		return [state, elementTyte, desired_element]
+		# return {'state':state, 'element_type':element_tyte,'element':displayed_element}
+		return [state, element_tyte, desired_element]
 
 	def page_scrolling_to_the_element (self, page_object = None):
 	# (C) перемещает отображаемую часть страницы к элементу. в метод передается объект webdriver
@@ -247,6 +247,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			if search_type == None:
 				try:
 					elements = driver.find_elements_by_css_selector(mask)
+					looking_type.append('selector')
 				except Exception as ex:
 					print('test in elements_list: ',ex)
 			try:
@@ -265,7 +266,7 @@ class Uis_tools(start_uis_test.Global_unit):
 
 	def abort_test(self):
 	# корректное прерывание теста
-		self.close_browser()
+		self.close_browser
 		loger.file_log(text = "Finish sanity test with Error's", text_type = 'SUCCESS')
 		sys.exit()
 	
@@ -318,7 +319,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		except Exception as ex:
 			loger.file_log(text = 'Can not scroll' + str(ex) + '\n' + 'URL = ' + str(url) + '\n', text_type = 'ERROR  ')
 			if breakONerror is True:
-				self.close_browser()
+				self.close_browser
 				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 				sys.exit()		
 
@@ -337,7 +338,7 @@ class Uis_tools(start_uis_test.Global_unit):
 				pass
 
 			if time_index >= timeOut:
-				self.close_browser()
+				self.close_browser
 				loger.file_log(text = 'Can\'t find Header text from this page', text_type = 'ERROR  ')
 				if self.breakONerror == True:
 					self.abort_test()
@@ -376,10 +377,12 @@ class Uis_tools(start_uis_test.Global_unit):
 			# 	print('БАБАХЕР', len(elem_list), len(current_elems), inner_index, mask)
 			if len(current_elems) > 1:
 				loger.file_log(text = 'Was found more than one item. Please check this method: lk_sidemenu_navigation', text_type = 'ERROR  ')
+				# тут может быть ошибка
+				break
 			if len(item_menu) == 0:
 				break
 			if time_index >= timeOut:
-				self.close_browser()
+				self.close_browser
 				loger.file_log(text = 'Can\'t choose your\'s menu item', text_type = 'ERROR  ')
 				break
 			time.sleep(1)
@@ -392,7 +395,7 @@ class Uis_tools(start_uis_test.Global_unit):
 				loger.file_log(text = 'Switching was done from ' + str(header_befor_switch[0]) + ' to ' + str(header_after_switch[0]), text_type = 'SUCCESS')
 				break
 			if time_index >= timeOut:
-				self.close_browser()
+				self.close_browser
 				loger.file_log(text = 'Can\'t choose next item  from west menu, the page still: ' + str(header_after_switch[0]), text_type = 'ERROR  ')
 				break
 			time.sleep(1)
@@ -612,7 +615,7 @@ class Uis_tools(start_uis_test.Global_unit):
 					loger.file_log(text = 'Necessary server was chosen', text_type = 'SUCCESS')
 					break
 				if time_index >= 20 and breakONerror is True:
-					self.close_browser()
+					self.close_browser
 					loger.file_log(text = 'Can not open necessary URL', text_type = 'ERROR  ')
 					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 					sys.exit()			
@@ -620,19 +623,13 @@ class Uis_tools(start_uis_test.Global_unit):
 				time_index += 1	
 
 	def login_to(self, url = None, user = None, password = None, breakONerror = True):
-	# логин в систему
-		# try:
-		# 	self.init_browser()
-		# except:
-		# 	loger.file_log(text = 'initialization Browser fail', text_type = 'ERROR  ')
-		# 	if breakONerror == True:
-		# 		abort_test()			
+	# логин в систему		
 		try:
 			self.goto(url, breakONerror)			
 		except Exception as ex:
 			loger.file_log(text = 'Can not open URL' + str(ex) + '\n' + 'URL = ' + str(url) + '\n', text_type = 'ERROR  ')
 			if breakONerror is True:
-				self.close_browser()
+				self.close_browser
 				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 				sys.exit()	
 		try:
@@ -642,7 +639,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		except Exception as ex:
 			loger.file_log(text = 'Can not input data (user name or password)', text_type = 'ERROR  ')
 			if breakONerror is True:
-				self.close_browser()
+				self.close_browser
 				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 				sys.exit()
 		
@@ -657,12 +654,17 @@ class Uis_tools(start_uis_test.Global_unit):
 			except:
 				pass
 			if time_index >= 20 and breakONerror is True:
-				self.close_browser()
+				self.close_browser
 				loger.file_log(text = 'Can not open necessary URL', text_type = 'ERROR  ')
 				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 				sys.exit()
 			time.sleep(1)
 			time_index += 1	
+
+
+
+
+
 # ______________________________________________________________________________________________
 	def account_click(self):
 		elems = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'class, \'x-btn-inner x-btn-inner-ul-linklike-medium\'')
@@ -679,9 +681,6 @@ class Uis_tools(start_uis_test.Global_unit):
 					break
 			except Exception as ex:
 				peint(ex)
-
-
-
 
 # ______________________________________________________________________________________________
 # (!)обработка личного кабинета - Консультант - Каналы - Обратный звонок
