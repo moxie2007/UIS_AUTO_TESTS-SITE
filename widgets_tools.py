@@ -24,8 +24,8 @@ class Wg_tools(tools.Uis_tools):
 		if template_name != None:
 			# ищем поле для ввода (поиск нужен потому, что все эллементы кроме страницы логина динамические)
 			elems = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'textfield-\'')
-			print(elems[0])
-			for elem in elems[1]:
+			print(elems.get('count'))
+			for elem in elems.get('elements'):
 				try:
 					if elem.get_attribute('data-ref') == 'inputEl':
 						self.change_value(element_definition = elem, text = template_name)
@@ -36,7 +36,7 @@ class Wg_tools(tools.Uis_tools):
 			# print(elems)	
 			elems_test = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'class, \'x-btn x-unselectable x-box-item x-btn-ul-main-medium\'')
 			# elems_test = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'commonsettings-page-ul-mainbutton-\'')
-			elems_test[1][0].click()
+			elems_test.get('elements')[0].click()
 		# проверяем, что значение общего количества шаблонов изменилось
 		time_index = 0
 		while True:
@@ -97,7 +97,7 @@ class Wg_tools(tools.Uis_tools):
 			self.click_element(element_definition = lk_elements.BUTTON('remove_template', mask = value_parametrs), timeOut = timeOut)
 			# подтверждение удаления (нажатие на кнопку: Да)
 			yes_button = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'ul-mainbutton-yes-\'')
-			for item in yes_button[1]:
+			for item in yes_button.get('elements'):
 				if 'btnInnerEl' in item.get_attribute('id'):
 					self.click_element(element_definition = item, timeOut = timeOut)
 					break
@@ -166,12 +166,12 @@ class Wg_tools(tools.Uis_tools):
 			self.click_element(element_definition = lk_elements.BUTTON('edit_template', mask = value_parametrs), timeOut = timeOut)
 			# находим открытый для редактирования шаблон и изменяем
 			template_for_change = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'commonsettings-page-textfield-value-\'')
-			if template_for_change[0] == 1:
+			if template_for_change.get('count') == 1:
 				# получаем динамический эллемент объекта
 				# print(template_for_change[1][0].get_attribute('id'))
-				template_id = template_for_change[1][0].get_attribute('id').split('-')[4] 
+				template_id = template_for_change.get('elements')[0].get_attribute('id').split('-')[4] 
 				# меняем значение\имя шаблона
-				self.change_value(element_definition = template_for_change[1][0], text = new_name)
+				self.change_value(element_definition = template_for_change.get('elements')[0], text = new_name)
 			else:
 				loger.file_log(text = 'Were found more than one template. Check templates definition in this method: general_settings_edit_template ', text_type = 'ERROR  ')
 				self.abort_test()
@@ -256,7 +256,7 @@ class Wg_tools(tools.Uis_tools):
 		# вводим IP
 		# ищем контейнер с текстом: Добавить шаблон, что - бы получить id (такое значение должно быть только одно).
 		text_items = []
-		for item in self.elements_list(search_type = None, mask = 'div[id^=commonsettings-page-container-] * label')[1]:
+		for item in self.elements_list(search_type = None, mask = 'div[id^=commonsettings-page-container-] * label').get('elements'):
 			try:
 				if (item.text) != 0:
 					text_items.append([item.text, item])
@@ -293,7 +293,7 @@ class Wg_tools(tools.Uis_tools):
 		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'cm-switchbox-\'')
 		if needed_elements != [None,[None], None]:
 		# ищем динамическую часть id для переключателя капчи	
-			for needed_element in needed_elements[1]:
+			for needed_element in needed_elements.get('elements'):
 				try:
 					if 'Защита от спама (капча):' in needed_element.text:
 						id_is = needed_element.get_attribute('id').split('-')[5]
@@ -324,9 +324,9 @@ class Wg_tools(tools.Uis_tools):
 		# находим все однотиповые эллементы (текст на странице с переключателем)
 		id_is = None
 		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'cm-switchbox-\'')
-		if needed_elements != [None,[None],None]:
+		if needed_elements.get('count') >= 1:
 		# ищем динамическую часть id для переключателя капчи	
-			for needed_element in needed_elements[1]:
+			for needed_element in needed_elements.get('elements'):
 				try:
 					if 'Защита от спама (капча):' in needed_element.text:
 						id_is = needed_element.get_attribute('id').split('-')[5]
@@ -354,8 +354,8 @@ class Wg_tools(tools.Uis_tools):
 	# (!C) метод определяющий Включено\Выключено распределение чатов на странице Распределение обращений
 		# находим динамическую часть id переключателя (по тексту перед выключателем)
 		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'chatprocessing-page-cm-switchbox-is_chat_distribution_enabled-\'')
-		if needed_elements != [None,[None], None]:
-			for needed_element in needed_elements[1]:
+		if needed_elements.get('count') >= 1:
+			for needed_element in needed_elements.get('elements'):
 				try:
 					if 'Настройка распределения чатов' in needed_element.text:
 						id_is = needed_element.get_attribute('id').split('-')[5]
@@ -406,7 +406,7 @@ class Wg_tools(tools.Uis_tools):
 		positions = {'br':"снизу справа", 'bl':"снизу слева", 'cr':"по центру справа", 'cl':"по центру слева", 'ur':"сверху справа", 'ul':"сверху слева"}
 		# на ходим текст для выпадающего списка со значениями, которые определяют положение виджета на странице
 		elements = self.elements_list(object_type = 'label', search_type = 'contains', mask = 'class, \'x-form-item-label x-form-item-label-ul   x-unselectable\'')
-		for element in elements[1]:
+		for element in elements.get('elements'):
 			try:
 				if 'Положение на сайте' in element.text:
 					current_element.append(element)
@@ -416,7 +416,7 @@ class Wg_tools(tools.Uis_tools):
 			loger.file_log(text = 'Was found more than one necessary element at View widget page, it\'s wrong', text_type = 'ERROR  ')
 		else:
 			# определяем эллементы для нажатия
-			type_click = {'txt':current_element[0],'dd':self.displayed_element(element_definition = lk_elements.SELECT('lk_kons_view_dd', mask = current_element[0].get_attribute('id').split('-')[5]))[2]}
+			type_click = {'txt':current_element[0],'dd':self.displayed_element(element_definition = lk_elements.SELECT('lk_kons_view_dd', mask = current_element[0].get_attribute('id').split('-')[5])).get('element')}
 			# проверяем какое значение уже выбрано и если нужно, то выбираем новое, если не нужно то не меняем.
 			current_value =  type_click.get('dd').get_attribute('value')
 			if positions.get(place) == current_value:
@@ -425,7 +425,7 @@ class Wg_tools(tools.Uis_tools):
 				# нажимаем на элемент
 				self.click_element(element_definition = type_click.get(open_dd_by))
 				# проверяем, что список открыт
-				dropdown_items = self.elements_list(object_type = 'li', search_type = 'contains', mask = 'class, \'x-boundlist-item\'')[1]
+				dropdown_items = self.elements_list(object_type = 'li', search_type = 'contains', mask = 'class, \'x-boundlist-item\'').get('elements')
 				for item in dropdown_items:
 					if positions.get(place) == item.text:
 						self.click_element(element_definition = item)
@@ -451,9 +451,8 @@ class Wg_tools(tools.Uis_tools):
 	# (GC) определяем состояние контрола: Анимация, True=включено, False=выключено
 		result = {'status_of_animation':None,'id_is':None}
 		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'uisettings-page-cm-switchbox-is_animation_enabled-\'')
-		
-		if needed_elements != [None,[None], None]:
-			for needed_element in needed_elements[1]:
+		if needed_elements.get('count') >= 1:	
+			for needed_element in needed_elements.get('elements'):
 				try:
 					if 'Анимация' in needed_element.text:
 						result['id_is'] = needed_element.get_attribute('id').split('-')[5]
@@ -479,6 +478,34 @@ class Wg_tools(tools.Uis_tools):
 	def cons_view_change_animation_lable_stat(self):
 		pass
 
+
+	def  cons_view_define_color_number(self):
+		# ytabuf yt nfr gthtcvjnhtnm kjubre
+	# определяем какой сейчас выбран цвет для Консультанта, определяем по номеру цвета. (окно такое на странице одно и по этому ищем по типу)
+		# находим объект: цветовая палитра
+		result = {}
+		color_piker = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'uisettings-page-ul-colorfield-banner_color-\'')
+		# проверяем что такой элемент один, если да то открываем (нажатием)
+		if color_piker.get('count') == 1:
+			self.click_element(element_definition = color_piker.get('elements')[0])
+			# проверяем, что открылось окно с выбором цветовая
+			# color_field = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-field x-form-item x-form-item-ul x-form-type-text x-box-item x-field-ul x-hbox-form-item x-form-item-no-label x-form-dirty\'')
+			color_field = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'uisettings-page-textfield-colorPickerField-\'')
+			for index in color_field.get('elements'):
+				print(index.get_attribute('style'))
+				print('\n')
+			result = {'count':color_field.get('count'),'style':color_field.get('elements')[0].get_attribute('value'), 'TEXT':color_field.get('elements')[0].text}
+
+
+
+		else:
+			loger.file_log(text = 'Were found more than one element, it\'s wrong. Exception in the method: wg.cons_view_define_color_number' , text_type = 'ERROR  ')
+		
+		return result
+
+	def cons_define_lable_state(self, lable_name = 'Показывать на сайте:'):
+		# определяем статус лейбла 
+		pass
 
 
 

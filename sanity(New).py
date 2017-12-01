@@ -43,7 +43,8 @@ tools.lk_sidemenu_navigation (item_menu = ['Консультант', "Внешн
 print(wg.cons_view_change_widget_position(place = 'cl'))
 # print(wg.cons_view_change_widget_position(place = 'ul'))
 # print(wg.cons_view_change_widget_position(place = 'cr'))
-print(wg.cons_view_define_animation_state)
+# print(wg.cons_view_define_animation_state)
+print(wg.cons_view_define_color_number())
 time.sleep(3)
 main_unit.close_browser
 

@@ -217,10 +217,9 @@ class Uis_tools(start_uis_test.Global_unit):
 				pass
 			step += 1
 			time.sleep(1)
-		# return {'state':state, 'element_type':element_tyte,'element':displayed_element}
-		return [state, element_tyte, desired_element]
+		return {'state':state, 'element_type': element_tyte, 'element': desired_element}
 
-	def page_scrolling_to_the_element (self, page_object = None):
+	def page_scrolling_to_the_element(self, page_object = None):
 	# (C) перемещает отображаемую часть страницы к элементу. в метод передается объект webdriver
 		driver = self.driver
 		if page_object != None:
@@ -229,10 +228,11 @@ class Uis_tools(start_uis_test.Global_unit):
 			except Exception as ex:
 				print('test in page_scrolling_to_the_element:  ',ex)
 	
-	def elements_list (self, object_type = 'div', search_type = 'contains', mask = 'li', timeOut = 10):
+	def elements_list(self, object_type = 'div', search_type = 'contains', mask = 'li', timeOut = 10):
 	# (C!)создает список элементов по определенной маске, возвращает количество найденных эллементов и сами элементы в виде готовывых объектов
 	# хорошо б придумать нормальный выбор между x-path и css selector
-		result = [None,[None], None]
+		result = {}
+		# None,[None], None]
 		driver = self.driver
 		step = 1
 		looking_type = []
@@ -256,7 +256,8 @@ class Uis_tools(start_uis_test.Global_unit):
 					for el in elements:
 						if el.is_displayed():
 							visible_elements.append(el)
-					result = [len(visible_elements), visible_elements, looking_type]
+					# result = [len(visible_elements), visible_elements, looking_type]
+					result = {'count':len(visible_elements), 'elements':visible_elements, 'type':looking_type}
 					break					
 			except:
 				pass
@@ -274,9 +275,10 @@ class Uis_tools(start_uis_test.Global_unit):
 	# (C) выполняет нажатие на эллемент
 		try:
 			current_object = self.displayed_element(element_definition = element_definition, timeOut = timeOut)
-			if current_object[0] is True:
-				self.page_scrolling_to_the_element(page_object = current_object[2])
-				current_object[2].click()
+			# if current_object.get('state'):
+			if current_object.get('state') is True:
+				self.page_scrolling_to_the_element(page_object = current_object.get('element'))
+				current_object.get('element').click()
 			else:
 				loger.file_log(text = 'can not click ' + str(element_definition) , text_type = 'ERROR  ')
 				if self.breakONerror == True:
@@ -290,10 +292,10 @@ class Uis_tools(start_uis_test.Global_unit):
 	# (C) выполняет изменение значения в эллементе (пока, без перемещения курсора к эллементу)
 		try:
 			current_object = self.displayed_element(element_definition = element_definition)
-			if current_object[0] is True:
-				current_object[2].click()
-				current_object[2].clear()
-				current_object[2].send_keys(str(text))
+			if current_object.get('state') is True:
+				current_object.get('element').click()
+				current_object.get('element').clear()
+				current_object.get('element').send_keys(str(text))
 		except Exception as ex:
 			loger.file_log(text = 'can not change data in the element ' + str(element_definition) , text_type = 'ERROR  ')
 			if breakONerror == True:
@@ -348,7 +350,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		# проверяем не открыто ли уже головное меню (например: Общие отчёты, Список обращений, Служебные)
 		try:
 			mask = 'class, \'x-grid-tree-node-expanded  x-grid-row\''
-			elem_list9 = self.elements_list(object_type = 'tr', search_type = 'contains', mask = mask, timeOut = timeOut)[1]
+			elem_list9 = self.elements_list(object_type = 'tr', search_type = 'contains', mask = mask, timeOut = timeOut).get('elements')
 			for t in elem_list9:
 				if  t.text == item_menu[0]:
 					inner_index += 1
@@ -359,7 +361,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		while True: 
 		# ищем пункт меню котовый к нажатию
 			mask = 'class, \' x-grid-cell-treecolumn x-grid-cell-first x-grid-cell-last x-unselectable x-grid-cell-treecolumn ul-tree-node-depth-' + str(inner_index) + '\''
-			elem_list = self.elements_list(object_type = 'td', search_type = 'contains', mask = mask, timeOut = timeOut)[1]
+			elem_list = self.elements_list(object_type = 'td', search_type = 'contains', mask = mask, timeOut = timeOut).get('elements')
 			# проверка, что искомый объект один, формируя список
 			for elem in elem_list:
 				if elem.text == item_menu[0]:
@@ -410,20 +412,20 @@ class Uis_tools(start_uis_test.Global_unit):
 			# старое меню
 			try:
 				old_elems = self.elements_list(search_type = None, mask = 'span[id*=-tab] > span[id$=btnInnerEl]', timeOut = 1)
-				if old_elems[0] != None:
+				if old_elems.get('count') != None:
 					items_index += 1
 			except:
 				pass
 			# новое меню
 			try:
 				new_elems = self.elements_list(search_type = None, mask = 'span[class=x-tab-inner]', timeOut = 1)
-				if new_elems[0] != None:
+				if new_elems.get('count') != None:
 					items_index += 1
 			except:
 				pass
 
 			if items_index != 0 :
-				elems = new_elems[1] + old_elems[1] 
+				elems = new_elems.get('elements') + old_elems.get('elements') 
 				break
 
 			if timer_index >= timeOut:
@@ -498,8 +500,7 @@ class Uis_tools(start_uis_test.Global_unit):
 	# получаем заголовок страницы и id заголовка 
 		result = None
 		elem_list = self.elements_list(object_type = 'div',  search_type = 'contains',  mask = 'id, \'-headerText-\'', timeOut = 10)
-		for elem in elem_list[1]:
-			# if self.displayed_element(element_definition = elem) and elem.text != '':
+		for elem in elem_list.get('elements'):
 			if elem.text != '':
 				result = [elem.text, elem.get_attribute('id')]
 				break
@@ -511,7 +512,7 @@ class Uis_tools(start_uis_test.Global_unit):
 	# больше одного значения по логике работы метода, быть не должно
 		result = [[],{}]
 		elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'class, \'x-btn x-btn-ul-usual-without-border x-unselectable x-box-item x-toolbar-item x-btn-ul-usual-medium x-btn-pressed\'')
-		for elem in elems[1]:
+		for elem in elems.get('elements'):
 			if elem.text != '':
 				result[0].append(elem.text)
 				result[1][elem.text] = elem
@@ -531,13 +532,13 @@ class Uis_tools(start_uis_test.Global_unit):
 			elems = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-toolbar-text x-box-item x-toolbar-item x-toolbar-text-ul\'', timeOut = 1)
 			empty_list = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-grid-empty\'', timeOut = 1)
 			# если эллементов нет и отображена надпись: Нет записей, прерываем поиск
-			if empty_list[0] != None and empty_list[1][0].text == 'Нет записей':
+			if empty_list.get('count') != None and empty_list.get('elements')[0].text == 'Нет записей':
 				result.append(0)
 				result.append(page)
 				break
 			# проверяем видимы ли найденные элементы
-			for item in elems[1]:
-				if '-page-tbtext-displayItem-' in item.get_attribute('id') and self.displayed_element(element_definition = item, timeOut = 1)[0]:
+			for item in elems.get('elements'):
+				if '-page-tbtext-displayItem-' in item.get_attribute('id') and self.displayed_element(element_definition = item, timeOut = 1).get('state'):
 					page_items.append(item)
 			if len(page_items) == 1 and page_items[0].text != '':
 				result.append(page_items[0].text.split()[2])
@@ -571,7 +572,7 @@ class Uis_tools(start_uis_test.Global_unit):
 	# (!C) возвращает количество и список объектов отображаемых иконок с ошибками если таковых нет то возвращает None
 	# надо проверить работоспособность
 		displayed_elems = []
-		elem_list = self.elements_list(object_type = 'div',  search_type = 'contains',  mask = 'role, \'alert\'', timeOut = 10)[1]
+		elem_list = self.elements_list(object_type = 'div',  search_type = 'contains',  mask = 'role, \'alert\'', timeOut = 10).get('elements')
 		for elem in elem_list:
 			if elem.is_displayed():
 				displayed_elems.append(elem)
@@ -587,16 +588,16 @@ class Uis_tools(start_uis_test.Global_unit):
 		url_action_start = self.definition_current_url()
 		# ищем окно с текущим сайтом (должно быть одно)
 		site_dropdown = self.elements_list(object_type = 'input', mask = 'class, \'x-form-field x-form-text x-form-text-cm-siteselector\'')
-		if site_dropdown[0] != 1:
-			loger.file_log(text = 'Were found ' + str(site_dropdown[0]) + ' element\'s. It\'s wrong', text_type = 'ERROR  ')
+		if site_dropdown.get('count') != 1:
+			loger.file_log(text = 'Were found ' + str(site_dropdown.get('count')) + ' element\'s. It\'s wrong', text_type = 'ERROR  ')
 			if self.breakONerror == True:
 				self.abort_test()
 		else:	
 			# открываем список доступных сайтво
-			self.click_element(element_definition = site_dropdown[1][0], breakONerror = True) 
+			self.click_element(element_definition = site_dropdown.get('elements')[0], breakONerror = True) 
 			obj_servers_list = self.elements_list(object_type = 'li', mask = 'class, \'x-boundlist-item\'')
-			if len(obj_servers_list[1]) > 0:
-				for current_server_name in obj_servers_list[1]:
+			if len(obj_servers_list.get('elements')) > 0:
+				for current_server_name in obj_servers_list.get('elements'):
 					if server_name == current_server_name.text:
 						try:
 							# скролим список к нужному элементу
@@ -661,7 +662,11 @@ class Uis_tools(start_uis_test.Global_unit):
 			time.sleep(1)
 			time_index += 1	
 
-
+	def change_top_menu_values(self, menu_item = 'Аккаунт'):
+	# (С!G) выбор опций верхнего меню
+	# формируем список доступных меню, {'название':}
+		menu_values = {'Аккаунт':1,'Сервисы и Статистика':2, 'Управление пользователями':3, 'Сменить пароль':4, 'Добавить наблюдателя ':5, 'Выйти':6}
+	# определяем какое значение выставлено сейчас
 
 
 
@@ -689,7 +694,7 @@ class Uis_tools(start_uis_test.Global_unit):
 	# проверяем что установлено сейчас
 	  # ищем id элемента с текстом: График показа
 		lable_item = self.elements_list(object_type = 'label', search_type = 'contains', mask = 'class, \'x-form-item-label x-form-item-label-ul\'')
-		for index in lable_item[1]:
+		for index in lable_item.get('elements'):
 			if 'График показа:' == str(index.text):
 				current_id = index.get_attribute('id').split('-')[4]
 				break
