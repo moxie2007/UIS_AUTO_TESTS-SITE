@@ -282,71 +282,260 @@ class Wg_tools(tools.Uis_tools):
 		# определяем на какой странице находимся
 		return [id_mask]
 
-# консультант -- каналы -- обратный звонок\Сайтфон
+# Сайтфон
 	@property
-	def define_kapcha_status(self):
-		kapcha_status = None
-	# (С)определяем статус выключателя капча: True включена, False выключена, считаем что элемент уже есть на странице
-	# если элемент не успел отрисоваться то будет
-		# находим все однотиповые эллементы (текст на странице с переключателем)
-		id_is = None
-		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'cm-switchbox-\'')
-		if needed_elements != [None,[None], None]:
-		# ищем динамическую часть id для переключателя капчи	
+	def sitephone_define_kapcha_status(self):
+	# (СG)определяем статус выключателя капча: True включена, False выключена, считаем что элемент уже есть на странице
+		result = {'status_of_lable':None,'id_is':None}
+		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'sitephone-page-cm-switchbox-is_captcha_enabled-\'')
+		if needed_elements.get('count') >= 1:	
 			for needed_element in needed_elements.get('elements'):
 				try:
-					if 'Защита от спама (капча):' in needed_element.text:
-						id_is = needed_element.get_attribute('id').split('-')[5]
+					if 'Защита от спама (капча)' in needed_element.text:
+						result['id_is'] = needed_element.get_attribute('id').split('-')[5]
 						break
 				except Exception as ex:
-					print('define_kapcha_status:  ', ex)					
-			if id_is != None:
+					print('sitephone_define_kapcha_status:  ', ex)
+			
+			if result.get('id_is') != None:
 				# кидаем консольную команду и получаем статус кнопки (хорошо б что-нить еще придумать сюда вместо такого способа)
-				kapcha_status = self.execute_console_command(command = "return window.Ext.getCmp('channels-page-cm-switchbox-is_captcha_enabled-" + str(id_is) + "').getValue()")
-		return kapcha_status
+				result['status_of_lable'] = self.execute_console_command(command = "return window.Ext.getCmp('sitephone-page-cm-switchbox-is_captcha_enabled-" + str(result.get('id_is')) + "').getValue()")
+			else:
+				loger.file_log(text = 'Can\'t define button status', text_type = 'ERROR  ')
+				self.close_browser
+				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+				sys.exit()
+		else:
+			loger.file_log(text = 'Can\'t find CAPTCHA text at page' , text_type = 'ERROR  ')
+			self.close_browser
+			loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+			sys.exit()
+		return result
 
-	def switch_kapcha_status(self, timeOut = 120):
-	# (С!)переключаем выключатель капчи
-		# определяем текущий статус капчи, если статус определить не удалось считаем, что капчи НЕТ на странице
-		timer = 0
-		while True:
-			try:
-				previus_kapcha_status = self.define_kapcha_status
-				break
-			except:
-				pass
-			if timer >= timeOut:
-				loger.file_log(text = 'Can\'t switch tumbler of the  kapcha, Can\'t find kapcha at page', text_type = 'ERROR  ')
-				break
-			time.sleep(1)
-			timer += 1
-		# меняем статус
-		# находим все однотиповые эллементы (текст на странице с переключателем)
-		id_is = None
-		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'cm-switchbox-\'')
-		if needed_elements.get('count') >= 1:
-		# ищем динамическую часть id для переключателя капчи	
+	def sitephone_change_kapcha_status(self, label_state = False, timeOut = 120):
+	# (СG)переключаем выключатель капчи
+		# определяем какое щас состояние
+		before_labele_state = self.sitephone_define_kapcha_status
+		# если состояние отличное от нужного ищем id по тексту перед кнопкой 
+		if before_labele_state.get('status_of_lable') == label_state:
+			loger.file_log(text = 'Label in status:' + str(label_state) + ', and should not be changed', text_type = 'SUCCESS')
+			after_labele_state = before_labele_state
+			result = None
+		else:
+			# жмем на кнопку
+			self.click_element(element_definition = lk_elements.LABELE('sitephone_kaptcha_lable', mask = str(before_labele_state.get('id_is'))), timeOut = timeOut)
+			time_index = 0
+			# ожидаем результата. состояние должно смениться от текущего
+			while time_index <= timeOut:
+				after_labele_state = self.sitephone_define_kapcha_status
+				if after_labele_state.get('status_of_lable') != before_labele_state.get('status_of_lable'):
+					loger.file_log(text = 'The state of the kapcha label was changed from: ' + str(before_labele_state.get('status_of_lable')) + ', to the: ' + str(after_labele_state.get('status_of_lable')), text_type = 'SUCCESS')
+					result = True
+					break
+				if time_index <= timeOut:
+					loger.file_log(text = 'Can\'t change kapcha label status', text_type = 'ERROR  ')
+					result = False
+					break
+				time.sleep(1)
+				time_index += 1	
+		return {'lable_state': after_labele_state.get('status_of_lable'), 'operation_status':result}
+
+	@property
+	def sitephone_define_display_at_site_status(self):
+	# (СG)определяем статус выключателя капча: True включена, False выключена, считаем что элемент уже есть на странице
+		result = {'status_of_lable':None,'id_is':None}
+		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'sitephone-page-cm-switchbox-is_visible-\'')
+		if needed_elements.get('count') >= 1:	
 			for needed_element in needed_elements.get('elements'):
 				try:
-					if 'Защита от спама (капча):' in needed_element.text:
-						id_is = needed_element.get_attribute('id').split('-')[5]
+					if 'Показывать на сайте' in needed_element.text:
+						result['id_is'] = needed_element.get_attribute('id').split('-')[5]
 						break
 				except Exception as ex:
-					print('switch_kapcha_status:  ', ex)					
-			if id_is != None:
-				self.click_element(element_definition = lk_elements.SELECT('lk_kons_kapcha_select', mask = id_is))
-		# после смены проверяем, что статус сменен и не равен старому
-		timer = 0
-		while True:
-			if previus_kapcha_status != self.define_kapcha_status:
-				loger.file_log(text = "The Kapcha switch was clicked, current status is: " + str(self.define_kapcha_status), text_type = 'SUCCESS')
-				break
-			if timer >= timeOut:
-				loger.file_log(text = 'Can\'t switch tumbler of the  kapcha', text_type = 'ERROR  ')
-				break
-			timer += 1
-			time.sleep(1)
-		# возвращаем новый статус капчи
+					print('sitephone_define_show_at_site_status:  ', ex)
+			
+			if result.get('id_is') != None:
+				# кидаем консольную команду и получаем статус кнопки (хорошо б что-нить еще придумать сюда вместо такого способа)
+				result['status_of_lable'] = self.execute_console_command(command = "return window.Ext.getCmp('sitephone-page-cm-switchbox-is_visible-" + str(result.get('id_is')) + "').getValue()")
+			else:
+				loger.file_log(text = 'Can\'t define button status', text_type = 'ERROR  ')
+				self.close_browser
+				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+				sys.exit()
+		else:
+			loger.file_log(text = 'Can\'t find "Show at site" text at page' , text_type = 'ERROR  ')
+			self.close_browser
+			loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+			sys.exit()
+		return result
+	
+	def sitephone_change_display_at_site_status(self, label_state = False, timeOut = 120):
+	# (СG)переключаем выключатель Показывать на сайте
+		# определяем какое щас состояние
+		before_labele_state = self.sitephone_define_display_at_site_status
+		# если состояние отличное от нужного ищем id по тексту перед кнопкой 
+		if before_labele_state.get('status_of_lable') == label_state:
+			loger.file_log(text = 'Label in status:' + str(label_state) + ', and should not be changed', text_type = 'SUCCESS')
+			after_labele_state = before_labele_state
+			result = None
+		else:
+			# жмем на кнопку
+			self.click_element(element_definition = lk_elements.LABELE('sitephone_display_at_site_lable', mask = str(before_labele_state.get('id_is'))), timeOut = timeOut)
+			time_index = 0
+			# ожидаем результата. состояние должно смениться от текущего
+			while time_index <= timeOut:
+				after_labele_state = self.sitephone_define_display_at_site_status
+				if after_labele_state.get('status_of_lable') != before_labele_state.get('status_of_lable'):
+					loger.file_log(text = 'The state of the kapcha label was changed from: ' + str(before_labele_state.get('status_of_lable')) + ', to the: ' + str(after_labele_state.get('status_of_lable')), text_type = 'SUCCESS')
+					result = True
+					break
+				if time_index <= timeOut:
+					loger.file_log(text = 'Can\'t change kapcha label status', text_type = 'ERROR  ')
+					result = False
+					break
+				time.sleep(1)
+				time_index += 1	
+		return {'lable_state': after_labele_state.get('status_of_lable'), 'operation_status':result}
+
+	@property
+	def sitephone_define_animation_status(self):
+	# (СG)определяем статус выключателя Анимация: True включена, False выключена, считаем что элемент уже есть на странице
+		result = {'status_of_lable':None,'id_is':None}
+		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'sitephone-page-cm-switchbox-is_animation_enabled-\'')
+		if needed_elements.get('count') >= 1:	
+			for needed_element in needed_elements.get('elements'):
+				try:
+					if 'Анимация:' in needed_element.text:
+						result['id_is'] = needed_element.get_attribute('id').split('-')[5]
+						break
+				except Exception as ex:
+					print('sitephone_define_animation_status:  ', ex)
+			
+			if result.get('id_is') != None:
+				# кидаем консольную команду и получаем статус кнопки (хорошо б что-нить еще придумать сюда вместо такого способа)
+				result['status_of_lable'] = self.execute_console_command(command = "return window.Ext.getCmp('sitephone-page-cm-switchbox-is_animation_enabled-" + str(result.get('id_is')) + "').getValue()")
+			else:
+				loger.file_log(text = 'Can\'t define button status', text_type = 'ERROR  ')
+				self.close_browser
+				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+				sys.exit()
+		else:
+			loger.file_log(text = 'Can\'t find Animation text at page' , text_type = 'ERROR  ')
+			self.close_browser
+			loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+			sys.exit()
+		return result
+
+	def sitephone_change_animation_status(self, label_state = False, timeOut = 120):
+	# (СG)переключаем выключатель Показывать на сайте
+		# определяем какое щас состояние
+		before_labele_state = self.sitephone_define_animation_status
+		# если состояние отличное от нужного ищем id по тексту перед кнопкой 
+		if before_labele_state.get('status_of_lable') == label_state:
+			loger.file_log(text = 'Label in status:' + str(label_state) + ', and should not be changed', text_type = 'SUCCESS')
+			after_labele_state = before_labele_state
+			result = None
+		else:
+			# жмем на кнопку
+			self.click_element(element_definition = lk_elements.LABELE('sitephone_animation_lable', mask = str(before_labele_state.get('id_is'))), timeOut = timeOut)
+			time_index = 0
+			# ожидаем результата. состояние должно смениться от текущего
+			while time_index <= timeOut:
+				after_labele_state = self.sitephone_define_animation_status
+				if after_labele_state.get('status_of_lable') != before_labele_state.get('status_of_lable'):
+					loger.file_log(text = 'The state of the Animation label was changed from: ' + str(before_labele_state.get('status_of_lable')) + ', to the: ' + str(after_labele_state.get('status_of_lable')), text_type = 'SUCCESS')
+					result = True
+					break
+				if time_index <= timeOut:
+					loger.file_log(text = 'Can\'t change Animation label status', text_type = 'ERROR  ')
+					result = False
+					break
+				time.sleep(1)
+				time_index += 1	
+		return {'lable_state': after_labele_state.get('status_of_lable'), 'operation_status':result}
+
+	@property
+	def sitephone_define_delayed_call_status(self):
+	# (СG)определяем статус выключателя Отложенный звонок: True включена, False выключена, считаем что элемент уже есть на странице
+		result = {'status_of_lable':None,'id_is':None}
+		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'sitephone-page-cm-switchbox-is_delayed_call_enabled-\'')
+		if needed_elements.get('count') >= 1:	
+			for needed_element in needed_elements.get('elements'):
+				try:
+					if 'Отложенный звонок' in needed_element.text:
+						result['id_is'] = needed_element.get_attribute('id').split('-')[5]
+						break
+				except Exception as ex:
+					print('sitephone_define_delayed_call_status:  ', ex)
+			
+			if result.get('id_is') != None:
+				# кидаем консольную команду и получаем статус кнопки (хорошо б что-нить еще придумать сюда вместо такого способа)
+				result['status_of_lable'] = self.execute_console_command(command = "return window.Ext.getCmp('sitephone-page-cm-switchbox-is_delayed_call_enabled-" + str(result.get('id_is')) + "').getValue()")
+			else:
+				loger.file_log(text = 'Can\'t define button status', text_type = 'ERROR  ')
+				self.close_browser
+				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+				sys.exit()
+		else:
+			loger.file_log(text = 'Can\'t find delayed call text at page' , text_type = 'ERROR  ')
+			self.close_browser
+			loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+			sys.exit()
+		return result		
+
+	def sitephone_change_delayed_call_status(self, label_state = False, timeOut = 120):
+	# (СG)переключаем выключатель Отложенный звонок
+		# определяем какое щас состояние
+		before_labele_state = self.sitephone_define_delayed_call_status
+		# если состояние отличное от нужного ищем id по тексту перед кнопкой 
+		if before_labele_state.get('status_of_lable') == label_state:
+			loger.file_log(text = 'Label in status:' + str(label_state) + ', and should not be changed', text_type = 'SUCCESS')
+			after_labele_state = before_labele_state
+			result = None
+		else:
+			# жмем на кнопку
+			self.click_element(element_definition = lk_elements.LABELE('sitephone_delayed_call_lable', mask = str(before_labele_state.get('id_is'))), timeOut = timeOut)
+			time_index = 0
+			# ожидаем результата. состояние должно смениться от текущего
+			while time_index <= timeOut:
+				after_labele_state = self.sitephone_define_delayed_call_status
+				if after_labele_state.get('status_of_lable') != before_labele_state.get('status_of_lable'):
+					loger.file_log(text = 'The state of the delayed call label was changed from: ' + str(before_labele_state.get('status_of_lable')) + ', to the: ' + str(after_labele_state.get('status_of_lable')), text_type = 'SUCCESS')
+					result = True
+					break
+				if time_index <= timeOut:
+					loger.file_log(text = 'Can\'t change delayed call label status', text_type = 'ERROR  ')
+					result = False
+					break
+				time.sleep(1)
+				time_index += 1	
+		return {'lable_state': after_labele_state.get('status_of_lable'), 'operation_status':result}
+
+	def sitephone_checkbox_show_at_devices_status(self, device = 'Смартфон'):
+	# определяет статус чекбокса: Показывать на устройстве. Считаем что параметр: Показывать на сайте, ВКЛ.
+
+		check_box = {}
+		result = {}
+		needed_elements = self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'-checkboxfield-\'')
+		counter = 0
+		for element in needed_elements.get('elements'):
+			if str(element.text) == str(device):
+				check_box['name'] = str(element.text)
+				check_box['element'] = element
+				check_box['id_is'] = str(element.get_attribute('id').replace('-boxLabelEl',''))
+				counter += 1
+		check_box['items_count'] = counter
+
+		result['status_of_checkbox'] = self.execute_console_command(command = "return window.Ext.getCmp('" + str(check_box.get('id_is')) + "').getValue('checked')")
+
+		return result
+
+
+
+
+
+
+
 
 # консультант -- Распределение обращений
 	@property
@@ -447,9 +636,9 @@ class Wg_tools(tools.Uis_tools):
 		return {'result':result,'result_place':type_click.get('dd').get_attribute('value')}
 
 	@property
-	def cons_view_define_animation_state(self):
+	def cons_view_define_animation_status(self):
 	# (GC) определяем состояние контрола: Анимация, True=включено, False=выключено
-		result = {'status_of_animation':None,'id_is':None}
+		result = {'status_of_lable':None,'id_is':None}
 		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'uisettings-page-cm-switchbox-is_animation_enabled-\'')
 		if needed_elements.get('count') >= 1:	
 			for needed_element in needed_elements.get('elements'):
@@ -462,7 +651,7 @@ class Wg_tools(tools.Uis_tools):
 			
 			if result.get('id_is') != None:
 				# кидаем консольную команду и получаем статус кнопки (хорошо б что-нить еще придумать сюда вместо такого способа)
-				result['status_of_animation'] = self.execute_console_command(command = "return window.Ext.getCmp('uisettings-page-cm-switchbox-is_animation_enabled-" + str(result.get('id_is')) + "').getValue()")
+				result['status_of_lable'] = self.execute_console_command(command = "return window.Ext.getCmp('uisettings-page-cm-switchbox-is_animation_enabled-" + str(result.get('id_is')) + "').getValue()")
 			else:
 				loger.file_log(text = 'Can\'t define button status', text_type = 'ERROR  ')
 				self.close_browser
@@ -475,12 +664,37 @@ class Wg_tools(tools.Uis_tools):
 			sys.exit()
 		return result
 
-	def cons_view_change_animation_lable_stat(self):
-		pass
+	def cons_view_change_animation_lable_status(self, label_state = True, timeOut = 120):
+	# (CG) изменяем состояние лейбла Анимация на странице Внешний вид Консультанта.
+		# определяем какое щас состояние
+		before_labele_state = self.cons_view_define_animation_status
+		# если состояние отличное от нужного ищем id по тексту перед кнопкой 
+		if before_labele_state.get('status_of_lable') == label_state:
+			loger.file_log(text = 'Label in status:' + str(label_state) + ', and should not be changed', text_type = 'SUCCESS')
+			after_labele_state = before_labele_state
+			result = None
+		else:
+			# жмем на кнопку
+			self.click_element(element_definition = lk_elements.LABELE('cons_view_animation_lable', mask = str(before_labele_state.get('id_is'))), timeOut = timeOut)
+			time_index = 0
+			# ожидаем результата. состояние должно смениться от текущего
+			while time_index <= timeOut:
+				after_labele_state = self.cons_view_define_animation_status
+				if after_labele_state.get('status_of_lable') != before_labele_state.get('status_of_lable'):
+					loger.file_log(text = 'The state of the Label was changed from: ' + str(before_labele_state.get('status_of_lable')) + ', to the: ' + str(after_labele_state.get('status_of_lable')), text_type = 'SUCCESS')
+					result = True
+					break
+				if time_index <= timeOut:
+					loger.file_log(text = 'Can\'t change Label status', text_type = 'ERROR  ')
+					result = False
+					break
+				time.sleep(1)
+				time_index += 1	
+		return {'lable_state': after_labele_state.get('status_of_lable'), 'operation_status':result}
 
 
 	def  cons_view_define_color_number(self):
-		# ytabuf yt nfr gthtcvjnhtnm kjubre
+		# нефига не так пересмотреть логику
 	# определяем какой сейчас выбран цвет для Консультанта, определяем по номеру цвета. (окно такое на странице одно и по этому ищем по типу)
 		# находим объект: цветовая палитра
 		result = {}
@@ -503,15 +717,27 @@ class Wg_tools(tools.Uis_tools):
 		
 		return result
 
-	def cons_define_lable_state(self, lable_name = 'Показывать на сайте:'):
-		# определяем статус лейбла 
-		pass
+#
 
 
+
+	# ------------------------------------------------------------------------------------------------
 
 
 
 
 
 	
-
+# временная заглушка для дашей, потом удалю
+	def error_looks(self, timeOut = 2):
+		result = 'None'
+		try:
+			items = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-title\'', timeOut = timeOut)
+			for item in items.get('elements'):
+				if item.text == 'Ошибка':
+					# print('internal_error')
+					result = 'Error'
+					break
+		except Exception as ex:
+			result = str(ex)
+		return result

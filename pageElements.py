@@ -38,42 +38,54 @@ class LK(object):
 			return['channels-page-cm-schedulecombo-schedule_id-' + str(int(mask) + 1) + '-trigger-picker"]', None]
                              # channels-page-cm-schedulecombo-schedule_id-1138-trigger-picker
 
+	# Дашборды создание\редактирование даша
+		# кнопка выподающего списка в фильтрах: Параметр
+		if element == 'dash_filters_parametr_drop_down_btn':
+			return['dashboards-page-ul-combobox-filterField-' + str(mask) + '-trigger-picker', None]
+		# кнопка выподающего списка в фильтрах: Условие
+		if element == 'dash_filters_condition_drop_down_btn':
+			return['dashboards-page-ul-combobox-filterComparison-' + str(mask) + '-trigger-picker', None]
+
+
+
+
 
 	def SELECT(self,element, mask = None, userType = None):
-	# Личный кабинет настройки консультант обратный звонок 
-		# включатель \ выключатель состояния капчи (предварительно определить динамическую часть id)
-		if element == 'lk_kons_kapcha_select':
-			return['//*[@id="channels-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]', None]
-		# ВКЛ состояние выкючателя
-		if element == 'state_on_kons_kapcha_select':
-			return['//*[@id="channels-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]/span/span[1]', None]
-		# ВЫКЛ состояние выкючателя
-		if element == 'state_off_kons_kapcha_select':
-			return['//*[@id="channels-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]/span/span[3]', None]
-		if element == 'test':
-			return['channels-page-cm-switchbox-is_captcha_enabled-' + str(mask), None]
-		if element == 'lk_kons_chats_distribution':
-			return['//*[@id="chatprocessing-page-cm-switchbox-is_chat_distribution_enabled-' + str(mask) + '-inputEl"]', None]
 	# Личный кабинет настройки консультант - Внешний вид
 		# выпадающий список для пункта меню: Положение
 		if element == 'lk_kons_view_dd':
 			return['//*[@id="uisettings-page-cm-widgetpositioncombo-banner_place-' + str(mask) + '-inputEl"]', None] 	
 
-	                # //*[@id="channels-page-cm-switchbox-is_captcha_enabled-1136-inputEl"]/span/span[1]
-	# боковое меню личного кабинета, это не раьботает на ранней стадии разработки тестов не учтена динамика
-		# if element == 'sm_cons':
-		# 	return['//*[@id="ul-treeview-1025-record-12782"]/tbody/tr/td/div/span', None]
-		# if element == 'sm_cons_general_settings':
-		# 	return['//*[@id="ul-treeview-1025-record-12787"]/tbody/tr/td/div/a/span', None]
-		# if element == 'sm_cons_channels':
-		# 	return['//*[@id="ul-treeview-1025-record-12788"]/tbody/tr/td/div/a/span', None]
-		# if element == 'sm_cons_view':
-		# 	return['//*[@id="ul-treeview-1025-record-12789"]/tbody/tr/td/div/a/span', None]
-		# if element == 'sm_cons_requests_distribution':
-		# 	return['//*[@id="ul-treeview-1025-record-12790"]/tbody/tr/td/div/a/span', None]
-
 	def COMBOBOX(self,element, mask = None, userType = None):
+		# ВОТ это непонятно накой, тем более что возврат странный
 		if element == 'test_site':
 			return('//*[@id="ul-boundlist-1034"]',None)
 
+		# СЕРВИСЫ - Cайтфон
+		# чек-бокс: ПК
+		if element == 'sitephone_checkbox_desktop':
+			return['//*[@id="sitephone-page-checkboxfield-desktop-' + str(mask) + '-inputEl"]',None]		
+		# чек-бокс: Смартфон
+		if element == 'sitephone_checkbox_mobile':
+			return['//*[@id="sitephone-page-checkboxfield-mobile-' + str(mask) + '-inputEl"]',None]			
 
+	def LABELE(self,element, mask = None, userType = None):
+		# СЕРВИСЫ - Консультант
+		# Внешний вид
+		# кнопка-лебл: Анимация
+		if element == 'cons_view_animation_lable':
+			return['//*[@id="uisettings-page-cm-switchbox-is_animation_enabled-' + str(mask) + '-inputEl"]',None]
+		
+		# СЕРВИСЫ - Cайтфон
+		# кнопка-лейбл: Капча
+		if element == 'sitephone_kaptcha_lable':
+			return['//*[@id="sitephone-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]',None]
+		# кнопка-лейбл: Показывать на сайте	
+		if element == 'sitephone_display_at_site_lable':
+			return['//*[@id="sitephone-page-cm-switchbox-is_visible-' + str(mask) + '-inputEl"]',None]
+		# кнопка-лейбл: Анимация	
+		if element == 'sitephone_animation_lable':
+			return['//*[@id="sitephone-page-cm-switchbox-is_animation_enabled-' + str(mask) + '-inputEl"]',None]
+		# кнопка-лейбл: Отложенный звонок: 	
+		if element == 'sitephone_delayed_call_lable':
+			return['//*[@id="sitephone-page-cm-switchbox-is_delayed_call_enabled-' + str(mask) + '-inputEl"]',None]

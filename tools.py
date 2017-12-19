@@ -275,24 +275,23 @@ class Uis_tools(start_uis_test.Global_unit):
 	# (C) выполняет нажатие на эллемент
 		try:
 			current_object = self.displayed_element(element_definition = element_definition, timeOut = timeOut)
-			# if current_object.get('state'):
 			if current_object.get('state') is True:
 				self.page_scrolling_to_the_element(page_object = current_object.get('element'))
 				current_object.get('element').click()
 			else:
 				loger.file_log(text = 'can not click ' + str(element_definition) , text_type = 'ERROR  ')
-				if self.breakONerror == True:
+				if breakONerror == True:
 					self.abort_test()
 		except Exception as ex:
 			loger.file_log(text = 'can not find and click ' + str(element_definition) , text_type = 'ERROR  ')
-			if self.breakONerror == True:
+			if breakONerror == True:
 				self.abort_test()
 	
 	def change_value(self, element_definition, text, breakONerror = False):
 	# (C) выполняет изменение значения в эллементе (пока, без перемещения курсора к эллементу)
 		try:
 			current_object = self.displayed_element(element_definition = element_definition)
-			if current_object.get('state') is True:
+			if current_object.get('state'):
 				current_object.get('element').click()
 				current_object.get('element').clear()
 				current_object.get('element').send_keys(str(text))
@@ -393,12 +392,15 @@ class Uis_tools(start_uis_test.Global_unit):
 		time_index = 0
 		while True:
 			header_after_switch = self.get_header_text
-			if header_befor_switch[1] != header_after_switch[1]:
-				loger.file_log(text = 'Switching was done from ' + str(header_befor_switch[0]) + ' to ' + str(header_after_switch[0]), text_type = 'SUCCESS')
-				break
+			if header_after_switch != None:
+				if header_befor_switch[1] != header_after_switch[1]:
+					loger.file_log(text = 'Switching was done from ' + str(header_befor_switch[0]) + ' to ' + str(header_after_switch[0]), text_type = 'SUCCESS')
+					break
 			if time_index >= timeOut:
-				self.close_browser
-				loger.file_log(text = 'Can\'t choose next item  from west menu, the page still: ' + str(header_after_switch[0]), text_type = 'ERROR  ')
+				loger.file_log(text = 'Can\'t choose next item  from west menu', text_type = 'ERROR  ')
+				if breakONerror is True:
+					self.close_browser		
+					break
 				break
 			time.sleep(1)
 			time_index += 1
