@@ -10,7 +10,7 @@ from testrail import *
 lk_elements  = pageElements.LK()
 # импортируем настройки из предварительно подготовленного файла
 configLK = tools.User_config()
-configLK.set_lk_parametrs(source_name = 'Yandex')
+configLK.set_lk_parametrs(source_name = 'YA')
 
 # lk_elements  = pageElements.LK()
 # # импортируем настройки из предварительно подготовленного файла
@@ -21,7 +21,7 @@ loger.file_log(text = 'Start asi test', text_type = 'SUCCESS')
 
 # модуль инициализации
 main_unit = start_uis_test.Global_unit()
-driver = main_unit.init_browser(product_type = 'ff')
+driver = main_unit.init_browser(product_type = 'ch')
 
 tools = tools.Uis_tools(driver)
 asi = asi_tools.Asi_tools(driver)

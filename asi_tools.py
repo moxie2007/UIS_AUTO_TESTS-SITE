@@ -17,7 +17,6 @@ class Asi_tools(tools.Uis_tools):
 		return self.elements_list(object_type = 'table', search_type = 'contains', mask = 'id, \'commonsettings-page-tableview-\'')
 
 	def login_to_yandex(self, url = None, user = None, password = None, breakONerror = True):
-		print(login,password,url)
 		# логин в систему		
 		try:
 			self.goto(url, breakONerror)			
@@ -27,6 +26,7 @@ class Asi_tools(tools.Uis_tools):
 				self.close_browser
 				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 				sys.exit()	
+		time.sleep(3)
 		try:
 			self.change_value(element_definition = lk_elements.INPUT('login_yandex'), text = user)
 			self.change_value(element_definition = lk_elements.INPUT('password_yandex'), text = password)

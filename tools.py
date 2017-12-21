@@ -37,15 +37,12 @@ class User_config():
 		try:
 			app_xml = etree.parse(config_file)
 			root = app_xml.getroot()
-			print(root)
 			platfom = {}
 			try:
-				for neighbor in root.iter(source_name):
+				for neighbor in root.iter(str(source_name)):
 					# так как значение параметра одно порядок значения не имеет, но если значений будет много, НУЖНО будет внести изменения в код
 					for index in neighbor.attrib.values():
-
 						for second_index in neighbor.attrib.keys():
-
 							platfom[second_index] = str(index)
 			except Exception as ex:
 				pass
@@ -54,7 +51,6 @@ class User_config():
 			self.password = platfom.get("password")
 		except Exception as ex:
 			pass
-		print(self.url, self.user_name, self.password)
 		return self.url, self.user_name, self.password
 	
 	@property

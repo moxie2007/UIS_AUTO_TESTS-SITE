@@ -16,7 +16,8 @@ class LK(object):
 			return ['//*[@id="commonsettings-page-textfield-description-' + str(mask) + '-inputEl"]', None]
 	# Яндекс
 		if element == 'login_yandex':
-			return ["/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[1]", None]
+			return ['//*[@id="root"]/div/div[2]/div/div[2]/div/div[2]/div/div/form/div[1]/label/input', None]
+			# //*[@id="root"]/div/div[2]/div/div[2]/div/div[2]/div/div/form/div[1]/label/input
 		if element == 'password_yandex':
 			return ["/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[2]", None]
 
