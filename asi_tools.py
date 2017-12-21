@@ -16,42 +16,4 @@ class Asi_tools(tools.Uis_tools):
 	# (C) поиск записай на странице выбирает формирует список объектов из элементов в таблице шаблонов ответа, в списке только отображенные на странице элементы
 		return self.elements_list(object_type = 'table', search_type = 'contains', mask = 'id, \'commonsettings-page-tableview-\'')
 
-	def login_to_yandex(self, url = None, user = None, password = None, breakONerror = True):
-		# логин в систему		
-		try:
-			self.goto(url, breakONerror)			
-		except Exception as ex:
-			loger.file_log(text = 'Can not open URL' + str(ex) + '\n' + 'URL = ' + str(url) + '\n', text_type = 'ERROR  ')
-			if breakONerror is True:
-				self.close_browser
-				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
-				sys.exit()	
-		time.sleep(3)
-		try:
-			self.change_value(element_definition = lk_elements.INPUT('login_yandex'), text = user)
-			self.change_value(element_definition = lk_elements.INPUT('password_yandex'), text = password)
-			self.click_element(element_definition = lk_elements.BUTTON('btn_login_yandex'))
-		except Exception as ex:
-			loger.file_log(text = 'Can not input data (user name or password)', text_type = 'ERROR  ')
-			if breakONerror is True:
-				self.close_browser
-				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
-				sys.exit()
-			
-			# time_index = 0
-			# # проверка на то, что открыто именно то, что мы и ожидали. по умолчанию открывается: Обзорный отчет 
-			# while True:
-			# 	try:
-			# 		header = self.get_header_text
-			# 		if header[0] == 'Обзорный отчет':
-			# 			loger.file_log(text = 'Open page done. URL is ' + str(url), text_type = 'SUCCESS')
-			# 			break
-			# 	except:
-			# 		pass
-			# 	if time_index >= 20 and breakONerror is True:
-			# 		self.close_browser
-			# 		loger.file_log(text = 'Can not open necessary URL', text_type = 'ERROR  ')
-			# 		loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
-			# 		sys.exit()
-			# 	time.sleep(1)
-			# 	time_index += 1	
+	#!!! def login_to_system - перенесен в tools. 

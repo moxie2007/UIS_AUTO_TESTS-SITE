@@ -662,7 +662,57 @@ class Uis_tools(start_uis_test.Global_unit):
 				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 				sys.exit()
 			time.sleep(1)
-			time_index += 1	
+			time_index += 1
+
+	def login_to_system(self, url = None, user = None, password = None, breakONerror = True, system_is = None):
+		# логин в системы интеграции и лк боя
+		try:
+			self.goto(url, breakONerror)
+		except Exception as ex:
+			loger.file_log(text = 'Can not open URL' + str(ex) + '\n' + 'URL = ' + str(url) + '\n', text_type = 'ERROR  ')
+			if breakONerror is True:
+				self.close_browser
+				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+				sys.exit()
+		if system_is == 'Comagic':
+			try:
+				self.change_value(element_definition = lk_elements.INPUT('login_comagic'), text = user)
+				self.change_value(element_definition = lk_elements.INPUT('password_comagic'), text = password)
+				self.click_element(element_definition = lk_elements.BUTTON('btn_login_comagic'))
+			except Exception as ex:
+				loger.file_log(text = 'Can not input data (user name or password)', text_type = 'ERROR  ')
+				if breakONerror is True:
+					self.close_browser
+					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+					sys.exit()
+			# TODO: сделать проверку на то, что открыто именно то, что мы и ожидали. по умолчанию открывается - if header[0] == 'Авторизация':
+		elif system_is == 'Yandex':
+			try:
+				self.change_value(element_definition = lk_elements.INPUT('login_yandex'), text = user)
+				self.change_value(element_definition = lk_elements.INPUT('password_yandex'), text = password)
+				self.click_element(element_definition = lk_elements.BUTTON('btn_login_yandex'))
+			except Exception as ex:
+				loger.file_log(text = 'Can not input data (user name or password)', text_type = 'ERROR  ')
+				if breakONerror is True:
+					self.close_browser
+					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+					sys.exit()
+				# TODO: сделать проверку на то, что открыто именно то, что мы и ожидали. по умолчанию открывается - if header[0] == 'Авторизация':
+		elif system_is == 'Google':
+			try:
+				self.change_value(element_definition = lk_elements.INPUT('login_google'), text = user)
+				self.click_element(element_definition = lk_elements.BUTTON('btn_next_login_google'))
+				self.change_value(element_definition = lk_elements.INPUT('password_google'), text = password)
+				self.click_element(element_definition = lk_elements.BUTTON('btn_next_pwd_google'))
+			except Exception as ex:
+				loger.file_log(text = 'Can not input data (user name or password)', text_type = 'ERROR  ')
+				if breakONerror is True:
+					self.close_browser
+					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+					sys.exit()
+				# TODO: сделать проверку на то, что открыто именно то, что мы и ожидали. по умолчанию открывается - if header[0] == 'Google AdWords':
+
+
 
 	def change_top_menu_values(self, menu_item = 'Аккаунт'):
 	# (С!G) выбор опций верхнего меню

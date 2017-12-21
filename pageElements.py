@@ -19,7 +19,25 @@ class LK(object):
 			return ['//*[@id="root"]/div/div[2]/div/div[2]/div/div[2]/div/div/form/div[1]/label/input', None]
 			# //*[@id="root"]/div/div[2]/div/div[2]/div/div[2]/div/div/form/div[1]/label/input
 		if element == 'password_yandex':
-			return ["/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[2]", None]
+			return ['//*[@id="root"]/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[2]/label/input', None]
+	# Google
+		if element == 'login_google':
+			return ['//*[@id="identifierId"]', None]
+		# if element == 'login_google2':
+		# 	return ['//*[@id="view_container"]/form/div[2]/div/div[1]/div[1]/div/div[1]/div/div[3]', None]
+		if element == 'password_google':
+			return ['//*[@id="password"]/div[1]/div/div[1]/input', None]
+
+	# Comagic
+		if element == 'login_comagic':
+			return ['/html/body/div[1]/div/div[2]/div[1]/div/div[2]/div[2]/form/div[1]/input', None]
+		if element == 'password_comagic':
+			return ['/html/body/div[1]/div/div[2]/div[1]/div/div[2]/div[2]/form/div[2]/input', None]
+
+
+
+
+
 
 
 	
@@ -46,8 +64,22 @@ class LK(object):
 					# channels-page-cm-schedulecombo-schedule_id-1138-trigger-picker
 	# Яндекс
 		if element == 'btn_login_yandex':
-			return ["/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[4]/button[1]", None]
+			return ['//*[@id="root"]/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[4]/button[1]/span/span', None]
+	# Google
+		if element == 'btn_next_login_google':
+			return ['//*[@id="identifierNext"]/content/span', None]
+		if element == 'btn_next_pwd_google':
+			return ['//*[@id="passwordNext"]/content/span', None]
+		if element == 'btn_select_account_google':
+			return ['//*[@id="view_container"]/form/div[2]/div/div/div/ul/li[1]/div/div[2]/p[2]', None]
+		if element == 'btn_change_google':
+			return ['//*[@id="identifierLink"]/div[2]/p', None]
+		if element == 'btn_submit_google':
+			return ['//*[@id="submit_approve_access"]/content/span', None]
 
+	# Comagic
+		if element == 'btn_login_comagic':
+			return ['/html/body/div[1]/div/div[2]/div[1]/div/div[2]/div[2]/form/div[4]/button', None]
 
 	# Дашборды создание\редактирование даша
 		# кнопка выподающего списка в фильтрах: Параметр
