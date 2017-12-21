@@ -3,7 +3,7 @@ class LK(object):
 	# форма логина
 		# окно ввода почты
 		if element == 'login_e-mail':
-			return ["/html/body/div/div/form/input[1]",None]
+			return ["/html/body/div/div/form/input[1]", None]
 		# окно ввода пароля
 		if element == 'login_password':
 			return ["/html/body/div/div/form/input[2]", None]
@@ -14,6 +14,12 @@ class LK(object):
 		# Общие настройки-Черный список- поле ввода комментарий	
 		if element == 'konsultant_black_list_add_comment':
 			return ['//*[@id="commonsettings-page-textfield-description-' + str(mask) + '-inputEl"]', None]
+	# Яндекс
+		if element == 'login_yandex':
+			return ["/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[1]", None]
+		if element == 'password_yandex':
+			return ["/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[2]", None]
+
 
 	
 	def BUTTON(self,element, mask = None, userType = None):
@@ -36,7 +42,11 @@ class LK(object):
 			# return['//*[@id="channels-page-cm-schedulecombo-schedule_id-' + str(mask) + '-trigger-picker"]', None]
 			print(int(mask) + 1)
 			return['channels-page-cm-schedulecombo-schedule_id-' + str(int(mask) + 1) + '-trigger-picker"]', None]
-                             # channels-page-cm-schedulecombo-schedule_id-1138-trigger-picker
+					# channels-page-cm-schedulecombo-schedule_id-1138-trigger-picker
+	# Яндекс
+		if element == 'btn_login_yandex':
+			return ["/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[4]/button[1]", None]
+
 
 	# Дашборды создание\редактирование даша
 		# кнопка выподающего списка в фильтрах: Параметр

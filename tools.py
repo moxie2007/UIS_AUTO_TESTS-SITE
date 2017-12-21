@@ -30,19 +30,22 @@ class User_config():
 		self.env = "lk"
 
 
-	def set_lk_parametrs(self, path_to_file = 'C:\\CONFIG\\'):
+	def set_lk_parametrs(self, path_to_file = 'C:\\CONFIG\\', source_name = 'LK'):
 		""" в этом методе читается конфигурационный файл и настройки
 		передаются в класс настроек """
 		config_file = str(path_to_file) + "uis_autotests.xml"
 		try:
 			app_xml = etree.parse(config_file)
 			root = app_xml.getroot()
+			print(root)
 			platfom = {}
 			try:
-				for neighbor in root.iter('LK'):
+				for neighbor in root.iter(source_name):
 					# так как значение параметра одно порядок значения не имеет, но если значений будет много, НУЖНО будет внести изменения в код
 					for index in neighbor.attrib.values():
+
 						for second_index in neighbor.attrib.keys():
+
 							platfom[second_index] = str(index)
 			except Exception as ex:
 				pass
@@ -51,6 +54,7 @@ class User_config():
 			self.password = platfom.get("password")
 		except Exception as ex:
 			pass
+		print(self.url, self.user_name, self.password)
 		return self.url, self.user_name, self.password
 	
 	@property
