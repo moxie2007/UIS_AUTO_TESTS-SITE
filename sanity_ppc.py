@@ -24,12 +24,8 @@ asi = asi_tools.Asi_tools(driver)
 
 
 
-# asi.login_to_yandex(url = configLK.get_login_url, user = configLK.get_user_name, password = configLK.get_pass)
-
 '''логин в рс'''
-# configLK.set_lk_parametrs(source_name = 'GG')
-# asi.login_to_google(url = configLK.get_login_url, user = configLK.get_user_name, password = configLK.get_pass)
-tools.login_to_system(url = configLK.get_login_url, user = configLK.get_user_name, password = configLK.get_pass, system_is = 'Yandex')
+# tools.login_to_system(url = configLK.get_login_url, user = configLK.get_user_name, password = configLK.get_pass, system_is = 'Yandex')
 '''логин в лк комеджик'''
 configLK.set_lk_parametrs(source_name = 'LK')
 tools.login_to(url = configLK.get_login_url, user = configLK.get_user_name, password = configLK.get_pass)
@@ -37,15 +33,20 @@ tools.login_to(url = configLK.get_login_url, user = configLK.get_user_name, pass
 '''переход в список сайтов
 	переход в настройки сайта'''
 tools.lk_sidemenu_navigation (item_menu = ['Сайты'],  timeOut = 120)
+# переходим в редактирование сайта ns-studio.su или siteaasi1.webdev.uiscom.ru
+asi.sites_edit_site(site_name = 'ns-studio.su', timeOut = 120)
+time.sleep(1)
+# переходим в режим Интеграция с сервисами
+tools.top_menu_navigation (tab_name = ['Интеграция с сервисами'], timeOut = 20)
 
-'''переход во вкладку интеграции'''
 
 '''подключение интеграции
 	ввод логина
 	клик по кнопке
 	клик на выбор аккаунта (для гугла)'''
 
-''''''
 
-''''''
-
+time.sleep(3)
+main_unit.close_browser
+print('FINISH!')
+loger.file_log(text = 'Finish test', text_type = 'SUCCESS', test_case_id = 45440, comment = 'Finish test. at ' + str(datetime.utcnow()))
