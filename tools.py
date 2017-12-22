@@ -408,27 +408,35 @@ class Uis_tools(start_uis_test.Global_unit):
 	def top_menu_navigation(self, tab_name = None, timeOut = 20):
 	#(С!) навигация по табам (вкладки вверху, активные выделяются зеленым)
 		# ищем элементы\табы на странице (старые и новые) условием выхода из цикла будет нахождение любых
+		#! обрабатывается только 2 случая: вместе и старые
 		timer_index = 0
-		items_index = 0
+		tabs_status = {}
 		while True:
 			# старое меню
 			try:
 				old_elems = self.elements_list(search_type = None, mask = 'span[id*=-tab] > span[id$=btnInnerEl]', timeOut = 1)
 				if old_elems.get('count') != None:
-					items_index += 1
+					tabs_status['old_elems'] = 'yes'
 			except:
 				pass
 			# новое меню
 			try:
 				new_elems = self.elements_list(search_type = None, mask = 'span[class=x-tab-inner]', timeOut = 1)
 				if new_elems.get('count') != None:
-					items_index += 1
+					tabs_status['new_elems'] = 'yes'
 			except:
 				pass
 
-			if items_index != 0 :
+			if len(tabs_status) == 2:
 				elems = new_elems.get('elements') + old_elems.get('elements') 
 				break
+			if len(tabs_status) == 1:
+				try:
+					elems = old_elems.get('elements')
+					break
+				except Exception as ex:
+					pass
+
 
 			if timer_index >= timeOut:
 				loger.file_log(text = 'No tab\'s navigation buttons at page', text_type = 'ERROR  ')
@@ -440,9 +448,11 @@ class Uis_tools(start_uis_test.Global_unit):
 			for el in elems:
 				try:
 					if el.is_displayed() and str(el.text) == str(tab_name):
+					# if str(el.text) == str(tab_name):
 						try:
 							# tab_before = str(self.get_active_top_tab)
 							self.click_element(element_definition = el,  breakONerror = True)
+
 							try:
 								print(self.get_active_top_tab)
 							except:
@@ -454,7 +464,7 @@ class Uis_tools(start_uis_test.Global_unit):
 					pass
 		else:
 			loger.file_log(text = 'You used method without tab name or such elements were not found, nothing was done', text_type = 'WARNING')
-
+		print(tabs_status)
 		# elem_list = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'id, \'tab-\'', timeOut = timeOut)[1]
 		# elem_list_2 = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'data-ref, \'btnInnerEl\'', timeOut = timeOut)[1]
 		# tab_names = []

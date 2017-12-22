@@ -35,9 +35,9 @@ tools.login_to(url = configLK.get_login_url, user = configLK.get_user_name, pass
 tools.lk_sidemenu_navigation (item_menu = ['Сайты'],  timeOut = 120)
 # переходим в редактирование сайта ns-studio.su или siteaasi1.webdev.uiscom.ru
 asi.sites_edit_site(site_name = 'ns-studio.su', timeOut = 120)
-time.sleep(1)
+time.sleep(5)
 # переходим в режим Интеграция с сервисами
-tools.top_menu_navigation (tab_name = ['Интеграция с сервисами'], timeOut = 20)
+tools.top_menu_navigation (tab_name = 'Интеграция с сервисами', timeOut = 20)
 
 
 '''подключение интеграции
@@ -46,7 +46,7 @@ tools.top_menu_navigation (tab_name = ['Интеграция с сервисам
 	клик на выбор аккаунта (для гугла)'''
 
 
-time.sleep(3)
+time.sleep(5)
 main_unit.close_browser
 print('FINISH!')
 loger.file_log(text = 'Finish test', text_type = 'SUCCESS', test_case_id = 45440, comment = 'Finish test. at ' + str(datetime.utcnow()))

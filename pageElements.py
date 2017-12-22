@@ -76,10 +76,17 @@ class LK(object):
 			return ['//*[@id="identifierLink"]/div[2]/p', None]
 		if element == 'btn_submit_google':
 			return ['//*[@id="submit_approve_access"]/content/span', None]
-
 	# Comagic
 		if element == 'btn_login_comagic':
 			return ['/html/body/div[1]/div/div[2]/div[1]/div/div[2]/div[2]/form/div[4]/button', None]
+
+
+
+# Сайты - редактирование сайта
+		if element == 'sites_edit_site':
+			return ['//*[@id="sites-page-tableview-' + str(mask[0]) + '-record-' + str(mask[1]) + '"]/tbody/tr/td[5]/div/a[1]/img', None]
+
+
 
 	# Дашборды создание\редактирование даша
 		# кнопка выподающего списка в фильтрах: Параметр

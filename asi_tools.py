@@ -21,38 +21,18 @@ class Asi_tools(tools.Uis_tools):
 	def sites_edit_site(self, site_name = None, timeOut = 120):
 		value_parametrs = []
 		list_sites_elements = self.sites_get_site_list
-		print(list_sites_elements)
+		# print(list_sites_elements)
 		# находим соответствующий эллемент и получаем номер таблицы в которой он хранится и его собственный номер (реализовать проверки!!!)
-		for element in list_sites_elements[1]:
-			print(element.get_attribute('id'), element.text)
+		for element in list_sites_elements.get('elements'):
+			# print(element.get_attribute('id'), element.text)
 			if str(site_name) in element.text:
 				value_parametrs.append(element.get_attribute('id').split('-')[3])
 				value_parametrs.append(element.get_attribute('id').split('-')[5])
+				print(value_parametrs)
 				break
-		# print(value_parametrs)
-		# 	# если на текущей странице ничего не нашлось, то переходим на следующую. Если нашлось, то выходим из цикла поиска выполняем удаление
-		# 	# если страница последняя, а результат отрицательный то тоже выходим	
-		# 	if len(value_parametrs) == 0:
-		# 		# создаю список с номерами страниц (номера могут быть только int)
-		# 		numbers = []
-		# 		for number in pages_with_templates[0]:
-		# 			try:
-		# 				numbers.append(int(number))
-		# 			except Exception as ex:
-		# 				pass
-		# 		# выполняю переход на след страницу для поиска элемента
-		# 		if paging in numbers:
-		# 			self.choose_paging_value(page_name = paging)
-		# 			paging += 1
-		# 			time.sleep(1)
-		# 		else:
-		# 			# обшли все доступные страницы, но шаблона не нашли
-		# 			break
-		# 	else:
-		# 		# удаляемый шаблон найден, выходим из поиска
-		# 		break		
+
 		# if value_parametrs != []:
-		self.click_element(element_definition = lk_elements.BUTTON('edit_site', mask = value_parametrs), timeOut = timeOut)
+		self.click_element(element_definition = lk_elements.BUTTON('sites_edit_site', mask = value_parametrs), timeOut = 1)
 		# 	# подтверждение удаления (нажатие на кнопку: Да)
 		# 	yes_button = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'ul-mainbutton-yes-\'')
 		# 	for item in yes_button[1]:
