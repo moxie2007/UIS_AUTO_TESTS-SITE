@@ -407,50 +407,45 @@ class Uis_tools(start_uis_test.Global_unit):
 
 	def top_menu_navigation(self, tab_name = None, timeOut = 20):
 	#(С!) навигация по табам (вкладки вверху, активные выделяются зеленым)
-		# ищем элементы\табы на странице (старые и новые) условием выхода из цикла будет нахождение любых
-		#! обрабатывается только 2 случая: вместе и старые
+		# ищем элементы\табы на странице (старые и новые) условием выхода из цикла будет нахождение любых или тайм аут
 		timer_index = 0
-		tabs_status = {}
+		tabs_status = {} # словарь с найденными типаме меню: старое и новое
+		elems = [] #текстовые значения, присутствующих вкладок\кнопок на странице
 		while True:
-			# старое меню
+			# старое меню, получаем названия вкладок (если на странице есть аналогичные кнопки с день, месяц, то они тоже тут)
 			try:
 				old_elems = self.elements_list(search_type = None, mask = 'span[id*=-tab] > span[id$=btnInnerEl]', timeOut = 1)
 				if old_elems.get('count') != None:
-					tabs_status['old_elems'] = 'yes'
+					tabs_status['old_elems'] = old_elems.get('elements')
 			except:
 				pass
-			# новое меню
+			# новое меню, получаем значения вкладок
 			try:
 				new_elems = self.elements_list(search_type = None, mask = 'span[class=x-tab-inner]', timeOut = 1)
 				if new_elems.get('count') != None:
-					tabs_status['new_elems'] = 'yes'
+					tabs_status['new_elems'] = new_elems.get('elements')
 			except:
 				pass
-
-			if len(tabs_status) == 2:
-				elems = new_elems.get('elements') + old_elems.get('elements') 
+			# если хоть что-то нашли выходим из поиска элементов
+			if len(tabs_status) != 0:
 				break
-			if len(tabs_status) == 1:
-				try:
-					elems = old_elems.get('elements')
-					break
-				except Exception as ex:
-					pass
-
-
+			
 			if timer_index >= timeOut:
 				loger.file_log(text = 'No tab\'s navigation buttons at page', text_type = 'ERROR  ')
 				elems = []
 				break
 			timer_index += 1
 		
+		# собираем общий список найденных вкладок, обходя результат в цикле
+		for tab_name_was_found in tabs_status.keys():
+			elems += tabs_status.get(tab_name_was_found)
+
+		# тут подумать и как-нить правильнее переделать
 		if tab_name != None and len(elems) != 0:
 			for el in elems:
 				try:
 					if el.is_displayed() and str(el.text) == str(tab_name):
-					# if str(el.text) == str(tab_name):
 						try:
-							# tab_before = str(self.get_active_top_tab)
 							self.click_element(element_definition = el,  breakONerror = True)
 
 							try:
@@ -464,32 +459,6 @@ class Uis_tools(start_uis_test.Global_unit):
 					pass
 		else:
 			loger.file_log(text = 'You used method without tab name or such elements were not found, nothing was done', text_type = 'WARNING')
-		print(tabs_status)
-		# elem_list = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'id, \'tab-\'', timeOut = timeOut)[1]
-		# elem_list_2 = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'data-ref, \'btnInnerEl\'', timeOut = timeOut)[1]
-		# tab_names = []
-		# element_counter = 0
-		# if tab_name != None:
-		# 	try:
-		# 		for el in elem_list:
-		# 			tab_names.append(el.text)
-		# 			if el in elem_list_2 and el.is_displayed() and str(el.text) == str(tab_name):
-		# 				try:
-		# 					tab_before = str(self.get_active_top_tab)
-		# 					el.click()
-		# 					element_counter += 1
-		# 					loger.file_log(text = 'Click was made at: ' + str(tab_name) + ', active tab was switched from '+ str(tab_before) +' to ' + str(self.get_active_top_tab), text_type = 'SUCCESS')
-		# 				except Exception as ex:
-		# 					print(ex)
-
-		# 		if str(tab_name) not in tab_names:
-		# 			loger.file_log(text = 'Tab name is wrong: ' + str(tab_name), text_type = 'ERROR  ')
-		# 		if element_counter >= 2:
-		# 			loger.file_log(text = 'This element was found' + str(element_counter) + 'times. Check this scenario by hands.', text_type = 'WARNING')
-		# 	except Exception as ex:
-		# 		print(ex)			
-		# else:
-		# 	loger.file_log(text = 'You used method without  tab name, nothing was done', text_type = 'WARNING')
 
 	@property
 	def get_active_top_tab(self):
