@@ -10,6 +10,7 @@ import multiprocessing.dummy as multiprocessing
 from xml.etree import ElementTree as etree
 
 from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
@@ -227,6 +228,10 @@ class Uis_tools(start_uis_test.Global_unit):
 				driver.execute_script("return arguments[0].scrollIntoView();", page_object)
 			except Exception as ex:
 				print('test in page_scrolling_to_the_element:  ',ex)
+
+	def get_parent(self, current_object = None):
+	# (CG!)возвращает родительский объект (на один вверх)
+		return current_object.find_element_by_xpath('..')
 	
 	def elements_list(self, object_type = 'div', search_type = 'contains', mask = 'li', timeOut = 10):
 	# (C!)создает список элементов по определенной маске, возвращает количество найденных эллементов и сами элементы в виде готовывых объектов
@@ -275,16 +280,16 @@ class Uis_tools(start_uis_test.Global_unit):
 	# (C) выполняет нажатие на эллемент
 		try:
 			current_object = self.displayed_element(element_definition = element_definition, timeOut = timeOut)
-			if current_object.get('state') is True:
+			if current_object.get('state'):
 				self.page_scrolling_to_the_element(page_object = current_object.get('element'))
 				current_object.get('element').click()
 			else:
 				loger.file_log(text = 'can not click ' + str(element_definition) , text_type = 'ERROR  ')
-				if breakONerror == True:
+				if breakONerror:
 					self.abort_test()
 		except Exception as ex:
 			loger.file_log(text = 'can not find and click ' + str(element_definition) , text_type = 'ERROR  ')
-			if breakONerror == True:
+			if breakONerror:
 				self.abort_test()
 	
 	def change_value(self, element_definition, text, breakONerror = False):
@@ -296,7 +301,7 @@ class Uis_tools(start_uis_test.Global_unit):
 				current_object.get('element').clear()
 				current_object.get('element').send_keys(str(text))
 		except Exception as ex:
-			loger.file_log(text = 'can not change data in the element ' + str(element_definition) , text_type = 'ERROR  ')
+			loger.file_log(text = 'Сan\'t change data in the element ' + str(element_definition) , text_type = 'ERROR  ')
 			if breakONerror == True:
 				self.abort_test()
 	
@@ -405,7 +410,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			time.sleep(1)
 			time_index += 1
 
-	def top_menu_navigation(self, tab_name = None, timeOut = 20):
+	def top_menu_navigation(self, tab_name = None, timeOut = 20, new_elemets_status = False):
 	#(С!) навигация по табам (вкладки вверху, активные выделяются зеленым)
 		# ищем элементы\табы на странице (старые и новые) условием выхода из цикла будет нахождение любых или тайм аут
 		timer_index = 0
@@ -420,12 +425,21 @@ class Uis_tools(start_uis_test.Global_unit):
 			except:
 				pass
 			# новое меню, получаем значения вкладок
-			try:
-				new_elems = self.elements_list(search_type = None, mask = 'span[class=x-tab-inner]', timeOut = 1)
-				if new_elems.get('count') != None:
-					tabs_status['new_elems'] = new_elems.get('elements')
-			except:
-				pass
+			if new_elemets_status == False: #когда Даши уйдут на бой оставим только: else
+				try:
+					new_elems = self.elements_list(search_type = None, mask = 'span[class=x-tab-inner]', timeOut = 1)
+					if new_elems.get('count') != None:
+						tabs_status['new_elems'] = new_elems.get('elements')
+				except:
+					pass
+			else:
+			# ищем все табы (новый алгоритм)
+				try:
+					new_elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'data-boundview, \'-tabbar-tabbar-mode-\'')
+					if new_elems.get('count') != None:
+						tabs_status['new_elems'] = new_elems.get('elements')
+				except:
+					pass
 			# если хоть что-то нашли выходим из поиска элементов
 			if len(tabs_status) != 0:
 				break
@@ -546,6 +560,21 @@ class Uis_tools(start_uis_test.Global_unit):
 			if elem.text != '':
 				result[0].append(elem.text)
 				result[1][elem.text] = elem
+		return result
+
+	def identity_of_the_child_to_the_parent(self, parent = None, child = None):
+	# (C!G) определяем принадлежит ли дочерний объект родительскому. оба значения должны передаваться как WebDriver объекты
+		result = {}
+		# ищем всех потомков от родительского объекта
+		try:
+			children = parent.find_elements_by_tag_name('*')
+			if child in children:
+				result['result'] = True
+			else:
+				result['result'] = False
+		except Exception as ex:
+			loger.file_log(text = 'Can\'t get children for parent object. Check method: tools.identity_of_the_child_to_the_parent', text_type = 'ERROR  ')
+			result['result'] = False		
 		return result
 
 	@property
@@ -699,6 +728,288 @@ class Uis_tools(start_uis_test.Global_unit):
 		menu_values = {'Аккаунт':1,'Сервисы и Статистика':2, 'Управление пользователями':3, 'Сменить пароль':4, 'Добавить наблюдателя ':5, 'Выйти':6}
 	# определяем какое значение выставлено сейчас
 
+	def login_toLK_by_admin(self, adm_login = 'login', adm_pass = 'pass', user_id = '1103', stend_url = 'url', timeOut = 120, breakONerror = False):
+		filtering_type = 'ID' # параметр, по которому будет осуществляться фильтрация пользователей (пока это ID)
+		login_name_for_user = 'Администратор'
+		method_status = True #статус выполнения метода
+		# открываем админку соответствующего стенда
+		self.goto(url = stend_url)
+		# находим поля ввода и кнопку логина на форме
+
+		login_input = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'lf-textfield-login\'')
+		pass_input = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'lf-textfield-password\'')
+		login_btn = self.elements_list(object_type = 'tbody', search_type = 'contains', mask = 'class, \'x-btn-small x-btn-icon-small-left\'')
+		# проверяем что эллементов не больше 3-х (по доному на тип)
+		try:
+			if sum([int(login_input.get('count')),int( pass_input.get('count')),int(login_btn.get('count'))]) != 3:
+				method_status = False
+		except:
+			method_status = False
+
+		# вводим логин пароль админа и жмем кнопку 
+		if method_status:
+			self.change_value(element_definition = login_input.get('elements')[0], text = adm_login)
+			self.change_value(element_definition = pass_input.get('elements')[0], text = adm_pass)
+			self.click_element(element_definition = login_btn.get('elements')[0])
+		else:
+			loger.file_log(text = 'Count objects that were found is wrong. Check objeckts definition in method: login_toLK_by_admin' , text_type = 'ERROR  ')
+		# ожидаем в течении таймаута, появление иконки: Клиенты (в виде папки)
+		time_index = 0
+		while True:
+			method_status = False
+			# находим все иконки на странице 
+			icons_tabs = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'class, \'ux-desktop-shortcut-text\'')
+			# ищем клиентов и если находим то нажимаем
+			try:
+				if int(icons_tabs.get('count')) >= 1:
+					for clients in icons_tabs.get('elements'):
+						if clients.text == 'Клиенты':
+							self.click_element(element_definition = clients)
+							method_status = True
+							break
+			except:
+				loger.file_log(text = 'Can\'t find icon: Clients', text_type = 'ERROR  ')
+			# если нашли и нажали на иконку Клиенты, то выходим из цикла
+			if method_status:
+				break
+			if time_index >= timeOut:
+				self.close_browser
+				loger.file_log(text = 'Can\'t find icon: Clients', text_type = 'ERROR  ')
+				if breakONerror is True:
+					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+					sys.exit()
+			time.sleep(1)
+			time_index += 1
+		# ищем иконку смайла: Клиенты, и нажимаем
+		if method_status:
+			time_index = 0
+			while True:
+				method_status = False
+				# ищем текст под иконкой смайлика
+				cliens_menu = self.elements_list(object_type = 'li', search_type = 'contains', mask = 'id, \'apps-window-shortcut\'')
+				if int(cliens_menu.get('count')) >= 1:
+					for item_menu in cliens_menu.get('elements'):
+						if item_menu.text == 'Клиенты':
+							self.click_element(element_definition = item_menu)
+							method_status = True
+							break
+				if method_status:
+					break
+				if time_index >= timeOut:
+					self.close_browser
+					loger.file_log(text = 'Can\'t find icon: Clients', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						sys.exit()
+				time.sleep(1)
+				time_index += 1
+		# находим вкладку ID и наводим на неё курсор что бы получить иконку выпадающего меню
+		if method_status:
+			parent_object = None
+			time_index = 0
+			while True:
+				method_status = False
+				# ищем все вкладке в таблице: Клиенты
+				cliens_menu = self.elements_list(object_type = 'td', search_type = 'contains', mask = 'class, \'x-grid3-hd x-grid3-cell x-grid3-td-\'')
+				if int(cliens_menu.get('count')) >= 1:
+					for item_menu in cliens_menu.get('elements'):
+						# как только находим нужный столбик наводим курсор, что б получить иконку выпадающего меню
+						if str(item_menu.text) == str(filtering_type):
+							id_tab = item_menu
+							hover = ActionChains(self.driver).move_to_element(item_menu)
+							hover.perform()
+							method_status = True
+							parent_object = item_menu
+							break
+				if method_status:
+					break
+				if time_index >= timeOut:
+					self.close_browser
+					loger.file_log(text = 'Can\'t find icon: Clients', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						sys.exit()
+				time.sleep(1)
+				time_index += 1
+		# находим и нажимаем выпадающее меню (стрелка\треугольнк вниз)
+		if method_status:
+			time_index = 0
+			while True:
+				method_status = False
+				# ищем все вкладке в таблице: Клиенты
+				cliens_menu = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'class, \'x-grid3-hd-btn\'')
+				if int(cliens_menu.get('count')) >= 1:
+					for item_menu in cliens_menu.get('elements'):
+						# как только находим нужный объект (треугольник) проверяем что он в нужной шапке столбика находится
+						if self.identity_of_the_child_to_the_parent(parent = parent_object, child = item_menu):
+							# нажимаем на этот элемент
+							self.click_element(element_definition = item_menu)
+							method_status = True
+							break
+				if method_status:
+					break
+				if time_index >= timeOut:
+					self.close_browser
+					loger.file_log(text = 'Can\'t find icon: Clients', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						sys.exit()
+				time.sleep(1)
+				time_index += 1
+		# ищем строчку с надписью: Фильтр, и наводим курсор, что бы получить меню
+		if method_status:
+			time_index = 0
+			while True:
+				method_status = False
+				# ищем все строчки в открывшемся меню
+				cliens_menu = self.elements_list(object_type = 'li', search_type = 'contains', mask = 'id, \'x-menu-el-ext-comp-\'')
+				if int(cliens_menu.get('count')) >= 1:
+					for item_menu in cliens_menu.get('elements'):
+						# как только находим строку в меню с текстом: Фильтр, наводим курсор
+						if str(item_menu.text) == 'Фильтр':
+							hover = ActionChains(self.driver).move_to_element(item_menu)
+							hover.perform()
+							method_status = True
+							parent_object = item_menu
+							break
+				if method_status:
+					break
+				if time_index >= timeOut:
+					loger.file_log(text = 'Can\'t find icon: Clients', text_type = 'ERROR  ')
+					break
+					if breakONerror is True:
+						self.close_browser
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						sys.exit()
+				time.sleep(1)
+				time_index += 1
+		# находим и вводим в поле со значением: равно(=) нужный id клиента
+		if method_status:
+			time_index = 0
+			while True:
+				method_status = False
+				# ищем все строчки в открывшемся меню картинку\иконку равно
+				field_with_eaqul_icon = self.elements_list(object_type = 'img', search_type = 'contains', mask = 'class, \'x-menu-item-icon ux-rangemenu-eq\'')
+				if int(field_with_eaqul_icon.get('count')) == 1:
+					# определяем родительский объект
+					parent_object = self.get_parent(current_object = field_with_eaqul_icon.get('elements')[0])
+					# находим все поля для ввода данных
+					input_fields = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'type, \'text\'')
+					# обходим все найденные эллементы и находим тот, который принадлежит родительскому
+					for field in input_fields.get('elements'):
+					# ищем поле ввода именно для для значения равно					
+						if  self.identity_of_the_child_to_the_parent(parent = parent_object, child = field).get('result'):
+							self.change_value(element_definition = field, text = user_id, breakONerror = False)
+							method_status = True
+							break
+				if method_status:
+					break
+				if time_index >= timeOut:
+					loger.file_log(text = 'Can\'t find icon: Clients', text_type = 'ERROR  ')
+					if breakONerror is True:
+						self.close_browser
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						sys.exit()
+					break
+				time.sleep(1)
+				time_index += 1
+		# закрываем все выпадающие окна, нажатием на вкладку (вкладка уже найдена и в повторной проверке не нуждается)
+		self.click_element(element_definition = id_tab)
+		# ожидаем пока в списке клиентов не появися нужное значение
+		# ожидаем пока в списке клиентов не появися нужное значение и открываем выпадающую кнопку: Перейти в клиентское приложение
+		if method_status:
+			time_index = 0
+			while True:
+				method_status = False
+				client_ids = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-grid3-cell-inner x-grid3-\'')
+				for client_name in client_ids.get('elements'):
+					if client_name.text == str(user_id):
+						# находим нужного клиента и вызываем контекстное меню
+						try:
+							print('клиент: {}'.format(client_name.text))
+							ActionChains(self.driver).move_to_element(client_name)
+							ActionChains(self.driver).context_click(client_name).perform()
+							method_status = True
+							break
+						except Exception as ex:
+							loger.file_log(text = 'Can\'t open context menu. Check that you have current defenition of the items in the clients table', text_type = 'ERROR  ')
+							if breakONerror is True:
+								self.close_browser
+								loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+								sys.exit()
+				if method_status:
+					break
+				if time_index >= timeOut:
+					self.close_browser
+					loger.file_log(text = 'Can\'t find icon: Clients', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						sys.exit()
+				time.sleep(1)
+				time_index += 1
+		# нажимаем на кнопку: перейти в приложение
+		if method_status:
+			method_status = False
+			dd_menus = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'class, \'x-menu-item-text\'')
+			if dd_menus.get('count') >= 1:
+				for dd_move_to in dd_menus.get('elements'):
+					if dd_move_to.text == 'Перейти в клиентское приложение':
+						self.click_element(element_definition = dd_move_to)
+						method_status = True
+						break
+		# ожидаем появления менюшки пользователя: Выберите пользователя
+		if method_status:
+			time_index = 0
+			while True:
+				method_status = False
+				# ищем полное, текст + иконка выпадашка, поле где указано наименование пользователя
+				all_users_field = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-panel-body x-panel-body-noheader x-panel-body-noborder\'')
+				if all_users_field.get('count') == 1:
+					parent_field = all_users_field.get('elements')[0]
+					print('parent:  ', parent_field)
+					# ищем текстовое поле и получаем текущее значение
+					text_fields = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'ext-comp-\'')
+					if int(text_fields.get('count')) >= 1:
+						for text_fied in text_fields.get('elements'):
+							if self.identity_of_the_child_to_the_parent(parent = parent_field, child = text_fied).get('result'):
+								# проверяем значение пользователя под которым хотим войти и если не совпадает с: login_name_for_user, меняем
+								# если значение еще не прогрузилось (длинна текста меньше нуля), то ничего не делаем
+
+								if len(text_fied.get_attribute('value')) >= 1:
+									if str(text_fied.get_attribute('value')) == str(login_name_for_user):
+										# находим и нажимаем кнопку: Перейти
+
+										move_to_btn = self.elements_list(object_type = 'button', search_type = 'contains', mask = 'class, \' x-btn-text\'')
+										if move_to_btn.get('count') >= 1:
+											for btn_move_to in move_to_btn.get('elements'):
+												if btn_move_to.text == 'Перейти':
+													self.click_element(element_definition = btn_move_to)
+													method_status = True
+													break
+
+
+
+									#(!) если нет то нужно выбрать соответствующее значение - тут надо доделать
+									else:
+										print('FALSE',text_fied.get_attribute('value'))
+										method_status = True
+								else:
+									pass
+							
+
+
+
+
+				if method_status:
+					break
+				if time_index >= timeOut:
+					self.close_browser
+					loger.file_log(text = 'Can\'t find icon: Clients', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						sys.exit()
+				time.sleep(1)
+				time_index += 1
 
 
 # ______________________________________________________________________________________________
