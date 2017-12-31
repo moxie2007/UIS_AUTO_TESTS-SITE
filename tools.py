@@ -26,7 +26,7 @@ import start_uis_test
 
 lk_elements  = pageElements.LK()
 
-class User_config():
+class User_config(start_uis_test.Global_unit):
 	def __init__(self):
 		self.env = "lk"
 
@@ -66,9 +66,7 @@ class User_config():
 	def get_pass(self):
 		return self.password
 
-# class Uis_tools():
-# 	def __init__(self):
-		# self.driver = None
+
 class Uis_tools(start_uis_test.Global_unit):
 	def __init__(self, driver):
 		self.driver = driver
@@ -96,7 +94,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		return 'timeout'
 			
 	def wait_for_event (self, action, timeout = 120):
-		#(С!) новая ожидалка
+		#(С!) новая ожидалка НЕ работает и пока наверное не нужна.
 		driver = self.driver
 		p = multiprocessing.Pool()
 		timer = time.sleep(timeout)
@@ -318,7 +316,7 @@ class Uis_tools(start_uis_test.Global_unit):
 	
 	def choose_from_dropdown(self, dropdown_element = None, current_item = None):
 	# (C!)выбирает конкретное значение для из выпадающего списка. выпадающий список передается как элемент из pageElements, а значение как строковое наименование
-	# пока не готово
+	# пока не готово, проверить что нигде не использую и УДАЛИТЬ!!!
 		driver = self.driver
 		try:
 			self.displayed_element(element_definition = dropdown_element)
@@ -590,6 +588,12 @@ class Uis_tools(start_uis_test.Global_unit):
 			return [len(displayed_elems), displayed_elems]
 		else:
 			return None
+	
+	@property
+	def move_to_new_active_tab(self):
+	# переход на новую вновь открытую вкладку
+		driver = self.driver
+		driver.switch_to_window(driver.window_handles[-1])
 
 #-------------------------------------------------------------------------------------------------
 	def switch_env(self, selected_element = None, server_name = 'sitecw2.webdev.uiscom.ru',  breakONerror = True):
@@ -673,7 +677,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			time_index += 1
 
 	def login_to_system(self, url = None, user = None, password = None, breakONerror = True, system_is = None):
-		# логин в системы интеграции и лк боя
+	# логин в системы интеграции и лк боя
 		try:
 			self.goto(url, breakONerror)
 		except Exception as ex:
@@ -721,7 +725,6 @@ class Uis_tools(start_uis_test.Global_unit):
 				# TODO: сделать проверку на то, что открыто именно то, что мы и ожидали. по умолчанию открывается - if header[0] == 'Google AdWords':
 
 
-
 	def change_top_menu_values(self, menu_item = 'Аккаунт'):
 	# (С!G) выбор опций верхнего меню
 	# формируем список доступных меню, {'название':}
@@ -729,9 +732,12 @@ class Uis_tools(start_uis_test.Global_unit):
 	# определяем какое значение выставлено сейчас
 
 	def login_toLK_by_admin(self, adm_login = 'login', adm_pass = 'pass', user_id = '1103', stend_url = 'url', timeOut = 120, breakONerror = False):
+	# выполняет логин через админку, не проверяет что логин выполнен
 		filtering_type = 'ID' # параметр, по которому будет осуществляться фильтрация пользователей (пока это ID)
-		login_name_for_user = 'Администратор'
+		# login_name_for_user = 'Администратор'
+		login_name_for_user = 'Администратор' #пользователь клиента под каторым мы выполняем вход
 		method_status = True #статус выполнения метода
+		error_text = 'Can\'t find icon: Clients' #текст для ошибок, которые используются во время ожидания
 		# открываем админку соответствующего стенда
 		self.goto(url = stend_url)
 		# находим поля ввода и кнопку логина на форме
@@ -966,7 +972,6 @@ class Uis_tools(start_uis_test.Global_unit):
 				all_users_field = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-panel-body x-panel-body-noheader x-panel-body-noborder\'')
 				if all_users_field.get('count') == 1:
 					parent_field = all_users_field.get('elements')[0]
-					print('parent:  ', parent_field)
 					# ищем текстовое поле и получаем текущее значение
 					text_fields = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'ext-comp-\'')
 					if int(text_fields.get('count')) >= 1:
@@ -974,43 +979,92 @@ class Uis_tools(start_uis_test.Global_unit):
 							if self.identity_of_the_child_to_the_parent(parent = parent_field, child = text_fied).get('result'):
 								# проверяем значение пользователя под которым хотим войти и если не совпадает с: login_name_for_user, меняем
 								# если значение еще не прогрузилось (длинна текста меньше нуля), то ничего не делаем
-
 								if len(text_fied.get_attribute('value')) >= 1:
 									if str(text_fied.get_attribute('value')) == str(login_name_for_user):
 										# находим и нажимаем кнопку: Перейти
-
 										move_to_btn = self.elements_list(object_type = 'button', search_type = 'contains', mask = 'class, \' x-btn-text\'')
-										if move_to_btn.get('count') >= 1:
+										if type(move_to_btn.get('count')) == int:
 											for btn_move_to in move_to_btn.get('elements'):
 												if btn_move_to.text == 'Перейти':
 													self.click_element(element_definition = btn_move_to)
 													method_status = True
 													break
-
-
-
-									#(!) если нет то нужно выбрать соответствующее значение - тут надо доделать
+									# если нет то нужно выбрать соответствующее значение - тут надо доделать
 									else:
-										print('FALSE',text_fied.get_attribute('value'))
-										method_status = True
+										# ищем все элементы - стрелки, для открытия выпадающего списка
+										all_arrow_elements = self.elements_list(object_type = 'img', search_type = 'contains', mask = 'class, \'x-form-trigger x-form-arrow-trigger\'')
+										# в цикле ищем элемент с родителем от окна с текстом и как находим нажимаем что бы полусить список значений
+										if type(all_arrow_elements.get('count')) == int:
+											for  arrow_element in all_arrow_elements.get('elements'):
+												if self.identity_of_the_child_to_the_parent(parent = parent_field, child = arrow_element).get('result'):
+													self.click_element(element_definition = arrow_element)
+													break
+										# ищем все элементы открывшегося списка с именами
+										list_all_users_names = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-combo-list-item\'')
+										# формируем словарь {текст:объект} со всеми значениями списка
+										if type(list_all_users_names.get('count')) == int:
+											names_list = {}
+											for current_name in list_all_users_names.get('elements'):
+												try:
+													names_list[current_name.text] = current_name
+												except:
+													pass
+											# проверяем есть ли пользователь в списке достуных имен клиентов 
+											if login_name_for_user in names_list.keys():
+												self.page_scrolling_to_the_element(page_object = names_list.get(login_name_for_user))
+												self.click_element(element_definition = names_list.get(login_name_for_user))
+											# находим кнопку: Перейти и нажимаем
+												move_to_btn = self.elements_list(object_type = 'button', search_type = 'contains', mask = 'class, \' x-btn-text\'')
+												if type(move_to_btn.get('count')) == int:
+													for btn_move_to in move_to_btn.get('elements'):
+														if btn_move_to.text == 'Перейти':
+															self.click_element(element_definition = btn_move_to)
+															method_status = True
+															break
+											else:
+												error_text = 'No such user name for Client\'s'		
 								else:
 									pass
-							
-
-
-
-
 				if method_status:
 					break
 				if time_index >= timeOut:
 					self.close_browser
-					loger.file_log(text = 'Can\'t find icon: Clients', text_type = 'ERROR  ')
+					loger.file_log(text = error_text, text_type = 'ERROR  ')
 					if breakONerror is True:
 						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 						sys.exit()
 				time.sleep(1)
 				time_index += 1
 
+		# переходим на вновь открытую вкладку и проверяем что мы перешли
+
+		if method_status:
+			# ожидаем пока вкладок в браузере станет две
+			time_index = 0
+			while True:
+				method_status = False
+				# предполагаем, что изначально у нас одно окно, по этому ожидаем, когда окон станет два. И как только находим такое, то выходим из цикла
+				if len(self.driver.window_handles) == 2:
+					method_status = True
+				if method_status:
+					break
+				if time_index >= timeOut:
+					self.close_browser
+					loger.file_log(text = 'Count of the browser windows not eaqul two', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						sys.exit()
+				time.sleep(1)
+				time_index += 1
+
+
+
+
+			self.move_to_new_active_tab
+			new_url = str(self.definition_current_url()) + '?testenv=1'
+			self.goto(new_url)
+			method_status = True
+		time.sleep(5)
 
 # ______________________________________________________________________________________________
 	def account_click(self):
