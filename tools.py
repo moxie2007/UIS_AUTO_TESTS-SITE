@@ -490,7 +490,7 @@ class Uis_tools(start_uis_test.Global_unit):
 
 	@property
 	def get_header_text(self):
-	# получаем заголовок страницы и id заголовка 
+	# получаем заголовок страницы и id заголовка (у дашбордов нет названия)
 		result = None
 		elem_list = self.elements_list(object_type = 'div',  search_type = 'contains',  mask = 'id, \'-headerText-\'', timeOut = 10)
 		for elem in elem_list.get('elements'):
@@ -733,6 +733,7 @@ class Uis_tools(start_uis_test.Global_unit):
 
 	def login_toLK_by_admin(self, adm_login = 'login', adm_pass = 'pass', user_id = '1103', stend_url = 'url', timeOut = 120, breakONerror = False):
 	# выполняет логин через админку, не проверяет что логин выполнен
+		method_result = {} # то что будет возвращено по завершение выполнения метода
 		filtering_type = 'ID' # параметр, по которому будет осуществляться фильтрация пользователей (пока это ID)
 		# login_name_for_user = 'Администратор'
 		login_name_for_user = 'Администратор' #пользователь клиента под каторым мы выполняем вход
@@ -741,7 +742,6 @@ class Uis_tools(start_uis_test.Global_unit):
 		# открываем админку соответствующего стенда
 		self.goto(url = stend_url)
 		# находим поля ввода и кнопку логина на форме
-
 		login_input = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'lf-textfield-login\'')
 		pass_input = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'lf-textfield-password\'')
 		login_btn = self.elements_list(object_type = 'tbody', search_type = 'contains', mask = 'class, \'x-btn-small x-btn-icon-small-left\'')
@@ -921,7 +921,6 @@ class Uis_tools(start_uis_test.Global_unit):
 				time_index += 1
 		# закрываем все выпадающие окна, нажатием на вкладку (вкладка уже найдена и в повторной проверке не нуждается)
 		self.click_element(element_definition = id_tab)
-		# ожидаем пока в списке клиентов не появися нужное значение
 		# ожидаем пока в списке клиентов не появися нужное значение и открываем выпадающую кнопку: Перейти в клиентское приложение
 		if method_status:
 			time_index = 0
@@ -930,9 +929,16 @@ class Uis_tools(start_uis_test.Global_unit):
 				client_ids = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-grid3-cell-inner x-grid3-\'')
 				for client_name in client_ids.get('elements'):
 					if client_name.text == str(user_id):
-						# находим нужного клиента и вызываем контекстное меню
+						# находим нужного клиента, узнаем его тип и вызываем контекстное меню
+						# находим родительский объект от id поля
+						parent_line_object = self.get_parent(self.get_parent(client_name))
+						type_filds  = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-grid3-cell-inner x-grid3-col-12\'')
+						for type_field in type_filds.get('elements'):
+							if self.identity_of_the_child_to_the_parent(parent = parent_line_object, child = type_field).get('result'):
+								method_result['client_type'] =  type_field.text
 						try:
-							print('клиент: {}'.format(client_name.text))
+							method_result['client_id'] = client_name.text
+							# print('клиент: {}'.format(client_name.text))
 							ActionChains(self.driver).move_to_element(client_name)
 							ActionChains(self.driver).context_click(client_name).perform()
 							method_status = True
@@ -1035,9 +1041,7 @@ class Uis_tools(start_uis_test.Global_unit):
 						sys.exit()
 				time.sleep(1)
 				time_index += 1
-
-		# переходим на вновь открытую вкладку и проверяем что мы перешли
-
+		# переходим на вновь открытую вкладку и проверяем, что мы перешли
 		if method_status:
 			# ожидаем пока вкладок в браузере станет две
 			time_index = 0
@@ -1057,14 +1061,12 @@ class Uis_tools(start_uis_test.Global_unit):
 				time.sleep(1)
 				time_index += 1
 
-
-
-
 			self.move_to_new_active_tab
 			new_url = str(self.definition_current_url()) + '?testenv=1'
 			self.goto(new_url)
 			method_status = True
-		time.sleep(5)
+		return method_result
+
 
 # ______________________________________________________________________________________________
 	def account_click(self):
