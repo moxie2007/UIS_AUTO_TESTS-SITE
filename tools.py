@@ -1088,7 +1088,7 @@ class Uis_tools(start_uis_test.Global_unit):
 # ______________________________________________________________________________________________
 # (!)обработка личного кабинета - Консультант - Каналы - Обратный звонок
 	def channels_back_call_choose_of_the_schedule(self, graphik_name = None):
-	# (!С) выбираем график показа виджет обратного звонка/ значение None соответствует любое значение
+	# (G!С) выбираем график показа виджет обратного звонка/ значение None соответствует любое значение
 	# проверяем что установлено сейчас
 	  # ищем id элемента с текстом: График показа
 		lable_item = self.elements_list(object_type = 'label', search_type = 'contains', mask = 'class, \'x-form-item-label x-form-item-label-ul\'')
