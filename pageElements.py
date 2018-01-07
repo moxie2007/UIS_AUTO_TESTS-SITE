@@ -3,7 +3,7 @@ class LK(object):
 	# форма логина
 		# окно ввода почты
 		if element == 'login_e-mail':
-			return ["/html/body/div/div/form/input[1]",None]
+			return ["/html/body/div/div/form/input[1]", None]
 		# окно ввода пароля
 		if element == 'login_password':
 			return ["/html/body/div/div/form/input[2]", None]
@@ -14,6 +14,32 @@ class LK(object):
 		# Общие настройки-Черный список- поле ввода комментарий	
 		if element == 'konsultant_black_list_add_comment':
 			return ['//*[@id="commonsettings-page-textfield-description-' + str(mask) + '-inputEl"]', None]
+	# Яндекс
+		if element == 'login_yandex':
+			return ['//*[@id="root"]/div/div[2]/div/div[2]/div/div[2]/div/div/form/div[1]/label/input', None]
+			# //*[@id="root"]/div/div[2]/div/div[2]/div/div[2]/div/div/form/div[1]/label/input
+		if element == 'password_yandex':
+			return ['//*[@id="root"]/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[2]/label/input', None]
+	# Google
+		if element == 'login_google':
+			return ['//*[@id="identifierId"]', None]
+		# if element == 'login_google2':
+		# 	return ['//*[@id="view_container"]/form/div[2]/div/div[1]/div[1]/div/div[1]/div/div[3]', None]
+		if element == 'password_google':
+			return ['//*[@id="password"]/div[1]/div/div[1]/input', None]
+
+	# Comagic
+		if element == 'login_comagic':
+			return ['/html/body/div[1]/div/div[2]/div[1]/div/div[2]/div[2]/form/div[1]/input', None]
+		if element == 'password_comagic':
+			return ['/html/body/div[1]/div/div[2]/div[1]/div/div[2]/div[2]/form/div[2]/input', None]
+
+
+
+
+
+
+
 	
 	def BUTTON(self,element, mask = None, userType = None):
 	# кнопка логина
@@ -35,40 +61,81 @@ class LK(object):
 			# return['//*[@id="channels-page-cm-schedulecombo-schedule_id-' + str(mask) + '-trigger-picker"]', None]
 			print(int(mask) + 1)
 			return['channels-page-cm-schedulecombo-schedule_id-' + str(int(mask) + 1) + '-trigger-picker"]', None]
-                             # channels-page-cm-schedulecombo-schedule_id-1138-trigger-picker
+					# channels-page-cm-schedulecombo-schedule_id-1138-trigger-picker
+	# Яндекс
+		if element == 'btn_login_yandex':
+			return ['//*[@id="root"]/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[4]/button[1]/span/span', None]
+	# Google
+		if element == 'btn_next_login_google':
+			return ['//*[@id="identifierNext"]/content/span', None]
+		if element == 'btn_next_pwd_google':
+			return ['//*[@id="passwordNext"]/content/span', None]
+		if element == 'btn_select_account_google':
+			return ['//*[@id="view_container"]/form/div[2]/div/div/div/ul/li[1]/div/div[2]/p[2]', None]
+		if element == 'btn_change_google':
+			return ['//*[@id="identifierLink"]/div[2]/p', None]
+		if element == 'btn_submit_google':
+			return ['//*[@id="submit_approve_access"]/content/span', None]
+	# Comagic
+		if element == 'btn_login_comagic':
+			return ['/html/body/div[1]/div/div[2]/div[1]/div/div[2]/div[2]/form/div[4]/button', None]
+
+
+
+# Сайты - редактирование сайта
+		if element == 'sites_edit_site':
+			return ['//*[@id="sites-page-tableview-' + str(mask[0]) + '-record-' + str(mask[1]) + '"]/tbody/tr/td[5]/div/a[1]/img', None]
+
+
+
+	# Дашборды создание\редактирование даша
+		# кнопка выподающего списка в фильтрах: Параметр
+		if element == 'dash_filters_parametr_drop_down_btn':
+			return['dashboards-page-ul-combobox-filterField-' + str(mask) + '-trigger-picker', None]
+		# кнопка выподающего списка в фильтрах: Условие
+		if element == 'dash_filters_condition_drop_down_btn':
+			return['dashboards-page-ul-combobox-filterComparison-' + str(mask) + '-trigger-picker', None]
+
+
+
 
 
 	def SELECT(self,element, mask = None, userType = None):
-	# Личный кабинет настройки консультант обратный звонок 
-		# включатель \ выключатель состояния капчи (предварительно определить динамическую часть id)
-		if element == 'lk_kons_kapcha_select':
-			return['//*[@id="channels-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]', None]
-		# ВКЛ состояние выкючателя
-		if element == 'state_on_kons_kapcha_select':
-			return['//*[@id="channels-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]/span/span[1]', None]
-		# ВЫКЛ состояние выкючателя
-		if element == 'state_off_kons_kapcha_select':
-			return['//*[@id="channels-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]/span/span[3]', None]
-		if element == 'test':
-			return['channels-page-cm-switchbox-is_captcha_enabled-' + str(mask), None]
-		if element == 'lk_kons_chats_distribution':
-			return['//*[@id="chatprocessing-page-cm-switchbox-is_chat_distribution_enabled-' + str(mask) + '-inputEl"]', None]
-
-	                # //*[@id="channels-page-cm-switchbox-is_captcha_enabled-1136-inputEl"]/span/span[1]
-	# боковое меню личного кабинета, это не раьботает на ранней стадии разработки тестов не учтена динамика
-		# if element == 'sm_cons':
-		# 	return['//*[@id="ul-treeview-1025-record-12782"]/tbody/tr/td/div/span', None]
-		# if element == 'sm_cons_general_settings':
-		# 	return['//*[@id="ul-treeview-1025-record-12787"]/tbody/tr/td/div/a/span', None]
-		# if element == 'sm_cons_channels':
-		# 	return['//*[@id="ul-treeview-1025-record-12788"]/tbody/tr/td/div/a/span', None]
-		# if element == 'sm_cons_view':
-		# 	return['//*[@id="ul-treeview-1025-record-12789"]/tbody/tr/td/div/a/span', None]
-		# if element == 'sm_cons_requests_distribution':
-		# 	return['//*[@id="ul-treeview-1025-record-12790"]/tbody/tr/td/div/a/span', None]
+	# Личный кабинет настройки консультант - Внешний вид
+		# выпадающий список для пункта меню: Положение
+		if element == 'lk_kons_view_dd':
+			return['//*[@id="uisettings-page-cm-widgetpositioncombo-banner_place-' + str(mask) + '-inputEl"]', None] 	
 
 	def COMBOBOX(self,element, mask = None, userType = None):
+		# ВОТ это непонятно накой, тем более что возврат странный
 		if element == 'test_site':
 			return('//*[@id="ul-boundlist-1034"]',None)
 
+		# СЕРВИСЫ - Cайтфон
+		# чек-бокс: ПК
+		if element == 'sitephone_checkbox_desktop':
+			return['//*[@id="sitephone-page-checkboxfield-desktop-' + str(mask) + '-inputEl"]',None]		
+		# чек-бокс: Смартфон
+		if element == 'sitephone_checkbox_mobile':
+			return['//*[@id="sitephone-page-checkboxfield-mobile-' + str(mask) + '-inputEl"]',None]			
 
+	def LABELE(self,element, mask = None, userType = None):
+		# СЕРВИСЫ - Консультант
+		# Внешний вид
+		# кнопка-лебл: Анимация
+		if element == 'cons_view_animation_lable':
+			return['//*[@id="uisettings-page-cm-switchbox-is_animation_enabled-' + str(mask) + '-inputEl"]',None]
+		
+		# СЕРВИСЫ - Cайтфон
+		# кнопка-лейбл: Капча
+		if element == 'sitephone_kaptcha_lable':
+			return['//*[@id="sitephone-page-cm-switchbox-is_captcha_enabled-' + str(mask) + '-inputEl"]',None]
+		# кнопка-лейбл: Показывать на сайте	
+		if element == 'sitephone_display_at_site_lable':
+			return['//*[@id="sitephone-page-cm-switchbox-is_visible-' + str(mask) + '-inputEl"]',None]
+		# кнопка-лейбл: Анимация	
+		if element == 'sitephone_animation_lable':
+			return['//*[@id="sitephone-page-cm-switchbox-is_animation_enabled-' + str(mask) + '-inputEl"]',None]
+		# кнопка-лейбл: Отложенный звонок: 	
+		if element == 'sitephone_delayed_call_lable':
+			return['//*[@id="sitephone-page-cm-switchbox-is_delayed_call_enabled-' + str(mask) + '-inputEl"]',None]
