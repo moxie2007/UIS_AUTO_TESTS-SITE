@@ -591,7 +591,7 @@ class Uis_tools(start_uis_test.Global_unit):
 	
 	@property
 	def move_to_new_active_tab(self):
-	# переход на новую вновь открытую вкладку
+	# переход на новую вновь открытую вкладку браузера
 		driver = self.driver
 		driver.switch_to_window(driver.window_handles[-1])
 
@@ -723,7 +723,6 @@ class Uis_tools(start_uis_test.Global_unit):
 					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 					sys.exit()
 				# TODO: сделать проверку на то, что открыто именно то, что мы и ожидали. по умолчанию открывается - if header[0] == 'Google AdWords':
-
 
 	def change_top_menu_values(self, menu_item = 'Аккаунт'):
 	# (С!G) выбор опций верхнего меню
@@ -1067,6 +1066,145 @@ class Uis_tools(start_uis_test.Global_unit):
 			method_status = True
 		return method_result
 
+	def opening_client_from_agent_lk(self, agent_client_id = None, user_for_login = None, timeOut = 120, breakONerror = False):
+		method_status = True
+	# (C!G)открываем Личный Кабинет клиента через Агентский ЛК/ предполагаем, что ЛК агента уже открыт
+		# проверяем на каком листе находимся и если необходимо то переходим
+		result = {}
+		time_index = 0
+		while True:
+			method_status = False
+			try:
+				# если вкладка корретная то переходим дальше
+				if self.get_header_text[0] == 'Мои клиенты':
+					method_status = True
+				else:
+					# если удалось определить вкладку и она не: Мои клиенты, по пробуем перейти на: Мои клиенты
+					# проверка нужна потому, что тип может быть и None
+					if type(self.get_header_text[0]) == str:
+						self.lk_sidemenu_navigation(item_menu = ['Мои клиенты'])
+			except:
+				pass
+			if method_status:
+				break
+			if time_index >= timeOut:
+				loger.file_log(text = 'Can\'t find page. Method: opening_client_from_agent_lk', text_type = 'ERROR  ')
+				if breakONerror is True:
+					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+					sys.exit()
+			time.sleep(1)
+			time_index += 1
+		# получаем список всех доступных клиентов {}
+		time_index = 0
+		while True:
+			method_status = False
+			try:
+				# ищем общие родительские объекты: строки - клиенты
+				agent_clients = self.elements_list(object_type = 'table',  search_type = 'contains',  mask = 'id, \'agentsapps-page-tableview\'', timeOut = 1)
+				if type(agent_clients.get('count')) == int:
+					# для каждого клиента агента определяем id и название и иконку для последующего перехода
+					for current_client in agent_clients.get('elements'):
+						client_credentials = {}
+						# id конкретного клиента
+						id_list = self.elements_list(object_type = 'td',  search_type = 'contains',  mask = 'data-columnid, \'agentsapps-page-gridcolumn-id\'')
+						if type(id_list.get('count')) == int:
+							for current_id in id_list.get('elements'):
+								if self.identity_of_the_child_to_the_parent(parent = current_client, child = current_id).get('result'):
+									client_credentials['client_object'] = current_client
+									break
+						# имя клиента
+						client_names_list = self.elements_list(object_type = 'td',  search_type = 'contains',  mask = 'data-columnid, \'agentsapps-page-cm-namecolumn-name-\'')
+						# client_names_list = self.elements_list(object_type = 'div',  search_type = 'contains',  mask = 'class, \'x-grid-cell-inner\'')
+						if type(client_names_list.get('count')) == int:
+							for current_name in client_names_list.get('elements'):
+								if self.identity_of_the_child_to_the_parent(parent = current_client, child = current_name).get('result'):
+									client_credentials['client_name'] = current_name.text
+									# client_credentials['cliet_name_object'] = current_name
+									break
+						# иконка для перехода в ЛК клиента
+						move_icons = self.elements_list(object_type = 'img',  search_type = 'contains',  mask = 'data-qtip-ownercmp, \'agentsapps-page-ul-actioncolumn-id-\'')
+						if type(move_icons.get('count')) == int:
+							for current_icon in move_icons.get('elements'):
+								if self.identity_of_the_child_to_the_parent(parent = current_client, child = current_icon).get('result'):
+									client_credentials['icon'] = current_icon
+									break
+
+						# если найдены все параметры, то выходим из поиска со статусом True
+						if len(client_credentials) >= 2:
+							result[current_id.text] = client_credentials
+							method_status = True			
+			except Exception as ex:
+				pass
+			if method_status:
+				break
+			if time_index >= timeOut:
+				loger.file_log(text = 'Can\'t find client\'s. Method: opening_client_from_agent_lk', text_type = 'ERROR  ')
+				if breakONerror is True:
+					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+					sys.exit()
+			time.sleep(1)
+			time_index += 1
+		# нажимаю на иконку клиента для заданного id
+		self.click_element(element_definition = result.get(agent_client_id).get('icon'))
+		# ожидаем появление меню для выбора конкретного пользователя под кем будет выполнен вход
+		time_index = 0
+		while True:
+			method_status = False
+			user_names = self.elements_list(object_type = 'input',  search_type = 'contains',  mask = 'id, \'agentsapps-page-ul-combobox-user_id-\'')
+			if type(user_names.get('count')) == int:
+				# проверяем подсвеченное имя и если оно совпадает с заданным, то ничего не делаем если нет, то меняем 
+				for user_name in user_names.get('elements'):
+					if user_name.get_attribute('value') == user_for_login:
+						method_status = True
+						break
+					else:
+						# находим общего родителя для текста и кнопки открывающей выпадающий список пользователей
+						parent = self.get_parent(current_object = self.get_parent(current_object = user_name))
+						# находим все кнопки на странице для открытия выпадающих списков
+						drop_down_buttons =  self.elements_list(object_type = 'div',  search_type = 'contains',  mask = 'id, \'-trigger-picker\'')
+						if type(drop_down_buttons.get('count')) == int:
+							for dd_button in drop_down_buttons.get('elements'):
+								if self.identity_of_the_child_to_the_parent(parent = parent, child = dd_button).get('result'):
+									# открываем список нажатием на подходящюю кнопку
+									self.click_element(element_definition = dd_button)					         
+									# method_status = True
+									break
+						# получаем список всех доступных пользователей (в появившемся списке)
+						users_list_dd = self.elements_list(object_type = 'div',  search_type = 'contains',  mask = 'data-boundview, \'agentsapps-page-ul-boundlist-\'')
+						if type(users_list_dd.get('count')) == int:
+							for item in users_list_dd.get('elements'):
+								if str(user_for_login) == str(item.text):
+									print('qwe'*100)
+									method_status = True
+								# нажимаем на нужного пользователя
+								if method_status:
+									self.click_element(element_definition = item)
+						# ищем кнопку: Перейти и нажимаем на неё
+						if method_status:
+							login_btns = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'id, \'agentsapps-page-ul-mainbutton-log_in_as_app-\'')
+							if type(login_btns.get('count')) == int:
+								for login_btn in login_btns.get('elements'):
+									if 'btnInnerEl' in login_btn.get_attribute('id'):
+										self.click_element(element_definition = login_btn)
+										method_status = True
+										break
+
+									
+
+
+			if method_status:
+				break
+			if time_index >= timeOut:
+				loger.file_log(text = 'Can\'t find client\'s. Method: opening_client_from_agent_lk', text_type = 'ERROR  ')
+				if breakONerror is True:
+					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+					sys.exit()
+			time.sleep(1)
+			time_index += 1
+
+		time.sleep(5)
+
+		return result
 
 # ______________________________________________________________________________________________
 	def account_click(self):
