@@ -39,6 +39,82 @@ class Vats_tools(tools.Uis_tools):
 				result[current_dashboard.text] = {'object':current_dashboard, 'status':dashboard_select_status}
 		return result
 
+	def dash_create_new_dashboard(self, dash_board_name = None, timeOut = 120):
+	# (С) создаем новый Дашборд. считаем, что вкладка\страница уже открыта и количество доступных меньше допустимого максимума
+		method_status = False
+		# находим иконку для добавления и нажимаем
+		add_buttons = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'dashboards-page-button-\'')
+		if type(add_buttons.get('count')) == int:
+			for add_button in add_buttons.get('elements'):
+				if add_button.get_attribute('data-ref') == 'btnIconEl':
+					self.click_element(element_definition = add_button)
+					method_status = True
+					break
+		# ожидаем открывания формы\окна и поля ввода имени Дашборда и вводи имя нового Дашборда
+		if method_status:
+			time_index = 0
+			while True:
+				method_status = False
+				dashboard_name_fields = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'dashboards-page-textfield-name-\'', timeOut = 1)
+				if type(dashboard_name_fields.get('count')) == int:
+					for current_obj in dashboard_name_fields.get('elements'):
+						if 'inputEl' in current_obj.get_attribute('id').split('-'):
+							self.change_value(element_definition = current_obj, text = str(dash_board_name))
+							method_status = True
+				if method_status:
+					break
+				if time_index >= timeOut:
+					loger.file_log(text = 'Can\'t change Dashboard name', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						self.close_browser
+						sys.exit()
+					break
+				time.sleep(1)
+				time_index += 1
+		# находим и нажимаем кнопку: Создать
+		if method_status:
+			time_index = 0
+			while True:
+				method_status = False
+				dashboard_save_btns = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'id, \'dashboards-page-ul-mainbutton-save-\'', timeOut = 1)
+				if type(dashboard_save_btns.get('count')) == int:
+					for dashboard_save_btn in dashboard_save_btns.get('elements'):
+						self.click_element(element_definition = dashboard_save_btn)
+						method_status = True
+				if method_status:
+					break
+				if time_index >= timeOut:
+					loger.file_log(text = 'Can\'t click to the Create button', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						self.close_browser
+						sys.exit()
+					break
+				time.sleep(1)
+				time_index += 1
+		# ожидаем, что активная вкладка - это вновь созданная (логика работы системы)
+		if method_status:
+			time_index = 0
+			while True:
+				method_status = False
+				if self.dash_define_existing_dashboards(time_out = 1).get(dash_board_name).get('status'):
+					loger.file_log(text = 'New dashboard with name:{} was created'.format(dash_board_name), text_type = 'SUCCESS')
+					method_status = True
+				if method_status:
+					break
+				if time_index >= timeOut:
+					loger.file_log(text = 'Another dashboard should be active', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						self.close_browser
+						sys.exit()
+					break
+				time.sleep(1)
+				time_index += 1
+
+
+
 	def dash_define_widgets_at_dashboard(self, time_out = 120):
 	# (СG) метод определяющий общее количество виджетов на дашборде, возвращает созданные не пустые
 		method_status = False
@@ -178,7 +254,6 @@ class Vats_tools(tools.Uis_tools):
 			result = blocks
 
 		return result
-
 
 
 	def dash_create_new_dash(self, widget_type = 'stiker'):

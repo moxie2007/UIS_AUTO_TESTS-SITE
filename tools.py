@@ -341,7 +341,6 @@ class Uis_tools(start_uis_test.Global_unit):
 					break
 			except:
 				pass
-
 			if time_index >= timeOut:
 				self.close_browser
 				loger.file_log(text = 'Can\'t find Header text from this page', text_type = 'ERROR  ')
