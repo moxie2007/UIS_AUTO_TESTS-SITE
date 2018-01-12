@@ -332,11 +332,12 @@ class Uis_tools(start_uis_test.Global_unit):
 		time_index = 0
 		inner_index = 2
 		current_elems = []
-		# оперделяем какой заголовок отображен (какая страница)
+		# оперделяем какой URL до изменения страницы (какая страница)
 		while True:
 			try:
-				header_befor_switch = self.get_header_text
-				if type(header_befor_switch[0]) is str:
+				old_url = self.definition_current_url()
+				# header_befor_switch = self.get_header_text
+				if type(old_url) is str:
 					break
 			except:
 				pass
@@ -391,14 +392,13 @@ class Uis_tools(start_uis_test.Global_unit):
 				break
 			time.sleep(1)
 			time_index += 1
-		# проверка на то, что нужная страница открыта (для этого, текст заголовка должен быть изменен)
+		# проверка на то, что нужная страница открыта (для этого, url должен измениться)
 		time_index = 0
 		while True:
-			header_after_switch = self.get_header_text
-			if header_after_switch != None:
-				if header_befor_switch[1] != header_after_switch[1]:
-					loger.file_log(text = 'Switching was done from ' + str(header_befor_switch[0]) + ' to ' + str(header_after_switch[0]), text_type = 'SUCCESS')
-					break
+			new_url = self.definition_current_url()
+			if new_url != old_url:
+				loger.file_log(text = 'West menu items switching was done', text_type = 'SUCCESS')
+				break
 			if time_index >= timeOut:
 				loger.file_log(text = 'Can\'t choose next item  from west menu', text_type = 'ERROR  ')
 				if breakONerror is True:
@@ -1172,38 +1172,58 @@ class Uis_tools(start_uis_test.Global_unit):
 						# получаем список всех доступных пользователей (в появившемся списке)
 						users_list_dd = self.elements_list(object_type = 'div',  search_type = 'contains',  mask = 'data-boundview, \'agentsapps-page-ul-boundlist-\'')
 						if type(users_list_dd.get('count')) == int:
-							for item in users_list_dd.get('elements'):
+							# перебираем каждого пользователя сравнивая с заданным (подумать, можноли блок этот переделать)
+							while len(users_list_dd.get('elements')) != 0:
+								item = users_list_dd.get('elements').pop()
 								if str(user_for_login) == str(item.text):
-									print('qwe'*100)
-									method_status = True
-								# нажимаем на нужного пользователя
-								if method_status:
 									self.click_element(element_definition = item)
-						# ищем кнопку: Перейти и нажимаем на неё
-						if method_status:
-							login_btns = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'id, \'agentsapps-page-ul-mainbutton-log_in_as_app-\'')
-							if type(login_btns.get('count')) == int:
-								for login_btn in login_btns.get('elements'):
-									if 'btnInnerEl' in login_btn.get_attribute('id'):
-										self.click_element(element_definition = login_btn)
-										method_status = True
-										break
-
-									
-
-
+									method_status = True
+									break
+						# если пройдя по всем пользователям, нужного не нашли то выходим из цикла (если пользователя НЕТ, то будет несколько записей в ЛОГ файле)
+						if len(users_list_dd.get('elements')) == 0 and method_status == False:
+							loger.file_log(text = 'Can\'t find user:\t{}. Method: opening_client_from_agent_lk'.format(user_for_login), text_type = 'ERROR  ')
+							break
+					# ищем кнопку: Перейти и нажимаем на неё
+					if method_status:
+						login_btns = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'id, \'agentsapps-page-ul-mainbutton-log_in_as_app-\'')
+						if type(login_btns.get('count')) == int:
+							for login_btn in login_btns.get('elements'):
+								if 'btnInnerEl' in login_btn.get_attribute('id'):
+									self.click_element(element_definition = login_btn)
+									method_status = True
+									break							
 			if method_status:
 				break
 			if time_index >= timeOut:
 				loger.file_log(text = 'Can\'t find client\'s. Method: opening_client_from_agent_lk', text_type = 'ERROR  ')
+				break
 				if breakONerror is True:
 					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 					sys.exit()
 			time.sleep(1)
 			time_index += 1
-
-		time.sleep(5)
-
+		# ожидаем загрузки страницы ЛК клиента (загрузку определяем по наличию)
+		time_index = 0
+		while True:
+			method_status = False
+			top_menu_user_name = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'id, \'main-actionbutton-username_button-\'')
+			if type(top_menu_user_name.get('count')) == int:
+				for item in top_menu_user_name.get('elements'):
+					if item.get_attribute('data-ref') == 'btnInnerEl':
+						if item.text == user_for_login:
+							loger.file_log(text = 'Agent\'s clint(id): {},\twas login to the personal account with User:{}'.format(agent_client_id, user_for_login), text_type = 'SUCCESS')
+							method_status = True
+							break
+			if method_status:
+				break
+			if time_index >= timeOut:
+				loger.file_log(text = 'Can\'t find client\'s. Method: opening_client_from_agent_lk', text_type = 'ERROR  ')
+				break
+				if breakONerror is True:
+					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+					sys.exit()
+			time.sleep(1)
+			time_index += 1
 		return result
 
 # ______________________________________________________________________________________________
