@@ -303,6 +303,17 @@ class Uis_tools(start_uis_test.Global_unit):
 			if breakONerror == True:
 				self.abort_test()
 	
+	def move_cursor_to_the_object(self, current_object = None):
+	#(С!G) Наводим курсор мыши на объект
+		driver = self.driver
+		if current_object != None:
+			hover = ActionChains(driver).move_to_element(current_object)
+			hover.perform()
+		else:
+			loger.file_log(text = 'You can\'t move mouse to the None object' , text_type = 'ERROR  ')
+
+
+
 	def definition_current_url(self, breakONerror = True):
 	# определяет текущий URL браузера
 		driver = self.driver
@@ -1067,7 +1078,7 @@ class Uis_tools(start_uis_test.Global_unit):
 
 	def opening_client_from_agent_lk(self, agent_client_id = None, user_for_login = None, timeOut = 120, breakONerror = False):
 		method_status = True
-	# (C!G)открываем Личный Кабинет клиента через Агентский ЛК/ предполагаем, что ЛК агента уже открыт
+	# (C!)открываем Личный Кабинет клиента через Агентский ЛК/ предполагаем, что ЛК агента уже открыт
 		# проверяем на каком листе находимся и если необходимо то переходим
 		result = {}
 		time_index = 0
@@ -1118,7 +1129,6 @@ class Uis_tools(start_uis_test.Global_unit):
 							for current_name in client_names_list.get('elements'):
 								if self.identity_of_the_child_to_the_parent(parent = current_client, child = current_name).get('result'):
 									client_credentials['client_name'] = current_name.text
-									# client_credentials['cliet_name_object'] = current_name
 									break
 						# иконка для перехода в ЛК клиента
 						move_icons = self.elements_list(object_type = 'img',  search_type = 'contains',  mask = 'data-qtip-ownercmp, \'agentsapps-page-ul-actioncolumn-id-\'')
@@ -1127,7 +1137,6 @@ class Uis_tools(start_uis_test.Global_unit):
 								if self.identity_of_the_child_to_the_parent(parent = current_client, child = current_icon).get('result'):
 									client_credentials['icon'] = current_icon
 									break
-
 						# если найдены все параметры, то выходим из поиска со статусом True
 						if len(client_credentials) >= 2:
 							result[current_id.text] = client_credentials
@@ -1166,7 +1175,6 @@ class Uis_tools(start_uis_test.Global_unit):
 								if self.identity_of_the_child_to_the_parent(parent = parent, child = dd_button).get('result'):
 									# открываем список нажатием на подходящюю кнопку
 									self.click_element(element_definition = dd_button)					         
-									# method_status = True
 									break
 						# получаем список всех доступных пользователей (в появившемся списке)
 						users_list_dd = self.elements_list(object_type = 'div',  search_type = 'contains',  mask = 'data-boundview, \'agentsapps-page-ul-boundlist-\'')
@@ -1183,14 +1191,14 @@ class Uis_tools(start_uis_test.Global_unit):
 							loger.file_log(text = 'Can\'t find user:\t{}. Method: opening_client_from_agent_lk'.format(user_for_login), text_type = 'ERROR  ')
 							break
 					# ищем кнопку: Перейти и нажимаем на неё
-					if method_status:
-						login_btns = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'id, \'agentsapps-page-ul-mainbutton-log_in_as_app-\'')
-						if type(login_btns.get('count')) == int:
-							for login_btn in login_btns.get('elements'):
-								if 'btnInnerEl' in login_btn.get_attribute('id'):
-									self.click_element(element_definition = login_btn)
-									method_status = True
-									break							
+				if method_status:
+					login_btns = self.elements_list(object_type = 'span',  search_type = 'contains',  mask = 'id, \'agentsapps-page-ul-mainbutton-log_in_as_app-\'')
+					if type(login_btns.get('count')) == int:
+						for login_btn in login_btns.get('elements'):
+							if 'btnInnerEl' in login_btn.get_attribute('id'):
+								self.click_element(element_definition = login_btn)
+								method_status = True
+								break							
 			if method_status:
 				break
 			if time_index >= timeOut:

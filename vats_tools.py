@@ -113,7 +113,122 @@ class Vats_tools(tools.Uis_tools):
 				time.sleep(1)
 				time_index += 1
 
-
+	def dash_delete_dashboard(self, dash_board_name = None, breakONerror = False, time_out = 120):
+	# удаляем дашборд, для удаления используем название. Удаляем один из многих подходящий дашборд
+		method_status = False
+		# получаем список всех имеющихся дашбордов
+		existing_dashboards = self.dash_define_existing_dashboards()
+		state_befor_deleting = existing_dashboards #фиксируем состояние до удаления, для сравнения с результатом по завершению метода
+		# получаем список всех созданных дашбордов и если он не пустой то находим выбранный
+		if len(existing_dashboards.keys()) > 0:
+			time_index = 0
+			while True:
+				method_status = False
+				for dash_board in existing_dashboards.keys():
+					if existing_dashboards.get(dash_board).get('status'):
+						# проверяем, совпадает ли название удаляемого даша и если нет, то переключаемся на нужный
+						if dash_board == dash_board_name:
+							# наводим курсор на объект
+							self.move_cursor_to_the_object(current_object = existing_dashboards.get(dash_board).get('object'))
+							method_status = True
+							break
+				# если искомая вкладка не была найдена в статусе актив то смотрим, а есть ли нужная вкладка и если ДА то кликаем на нее
+				# если вкладки нет вообще, то нужно прервать метод (выходим из if в статусе False)
+				if dash_board_name in existing_dashboards.keys() and method_status == False:
+					self.click_element(element_definition = existing_dashboards.get(dash_board_name).get('object'))
+					existing_dashboards = self.dash_define_existing_dashboards()
+				if dash_board_name not in existing_dashboards.keys() and method_status == False:
+					loger.file_log(text = 'There is no dasboard with name: {}\t. Method: vats_tools.dash_delete_dashboard'.format(dash_board_name), text_type = 'ERROR  ')
+					break
+				
+				if method_status:
+					break
+				if time_index >= time_out:
+					loger.file_log(text = 'Can\'t click to the Create button', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						self.close_browser
+						sys.exit()
+					break
+			time.sleep(1)
+			time_index += 1
+		# ищем иконку редактирования дашборда и нажимаем на нее	
+		if method_status:
+			time_index = 0
+			while True:
+				method_status = False
+				edit_tabs_btns = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'class, \'x-tab-edit-btn-inner\'', timeOut = 1)
+				# перебираем все найденные и если есть тот, который является потомком вкладки, жмем\кликаем на него
+				if type(edit_tabs_btns.get('count')) == int:
+					for edit_btn in edit_tabs_btns.get('elements'):
+						if self.identity_of_the_child_to_the_parent(parent = existing_dashboards.get(dash_board_name).get('object'), child = edit_btn).get('result'):
+							self.click_element(element_definition = edit_btn)
+							method_status = True
+				if method_status:
+					break
+				if time_index >= time_out:
+					loger.file_log(text = 'Can\'t click to the Create button', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						self.close_browser
+						sys.exit()
+		# ищем кнопки..\иконку удаления и их родительские объекты
+		if method_status:
+			time_index = 0
+			delete_btns_list = {}
+			while True:
+				method_status = False
+				delete_tabs_btns = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'componentid, \'dashboards-page-ul-usualbutton-remove-\'', timeOut = 1)
+				# перебираем все найденные и собираем в словарь (объект, родитель)
+				if type(delete_tabs_btns.get('count')) == int:
+					for delete_btn in delete_tabs_btns.get('elements'):
+						delete_btns_list[delete_btn] = self.get_parent(current_object = delete_btn)
+					method_status = True
+				if method_status:
+					break
+				if time_index >= time_out:
+					loger.file_log(text = 'Can\'t find the Garbage\Delete icon button', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						self.close_browser
+						sys.exit()
+		# ищем поле редактирования названия Дашборда
+		if method_status:
+			time_index = 0
+			while True:
+				method_status = False
+				edit_tabs_fields = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'dashboards-page-ul-editabledisplayfield-name-\'', timeOut = 1)
+				# ищем перебором тот объект значение которого совпадает с dash_board_name
+				if type(edit_tabs_fields.get('count')) == int:
+					for edit_field in edit_tabs_fields.get('elements'):
+						if edit_field.get_attribute('value') == dash_board_name:
+							# проходим по всем кнопкам удаления и у которой родитель совпадает с текстом - название Дашборда удаляем (такая должна быть одна - потому что открыть одновременно можно только одну)
+							for current_parent in delete_btns_list.keys():
+								if self.identity_of_the_child_to_the_parent(parent = delete_btns_list.get(current_parent), child = edit_field).get('result'):
+									self.click_element(element_definition = current_parent)
+									method_status = True
+									break
+				if method_status:
+					break
+				if time_index >= time_out:
+					loger.file_log(text = 'Can\'t click to the delete button. Method: dash_delete_dashboard', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						self.close_browser
+						sys.exit()
+		# проверяем, что осталось вкладок на одну меньше
+		if method_status:
+			# print(existing_dashboards)
+			if self.dash_define_existing_dashboards().get(dash_board_name) == None:
+				loger.file_log(text = 'Dashboard: {}, was deleted'.format(dash_board_name), text_type = 'SUCCESS')
+				return True
+		else:
+			loger.file_log(text = 'Can\'t delete dashboard: {}'.format(dash_board_name), text_type = 'ERROR  ')
+			return False
+			if breakONerror is True:
+				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+				self.close_browser
+				sys.exit()
 
 	def dash_define_widgets_at_dashboard(self, time_out = 120):
 	# (СG) метод определяющий общее количество виджетов на дашборде, возвращает созданные не пустые
