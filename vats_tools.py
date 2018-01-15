@@ -10,25 +10,29 @@ class Vats_tools(tools.Uis_tools):
 	def __init__(self, driver):
 		self.driver = driver
 
-	def dash_define_existing_dashboards(self, time_out = 120):
+	def dash_define_existing_dashboards(self, time_out = 120, skip_error_message = False):
 	# (C!G)определяем существующие дашборды, возвращаем название, объект, стату(выбран объект или нет)
 		time_index = 0
-		method_status = None
+		method_status = False
 		result = {}
 		while True:
-			# ищем вкладки
+			method_status = False
+			# ищем вкладки, вкладок может и не быть
 			try:
 				new_elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'data-boundview, \'-tabbar-tabbar-mode-\'')
 				# проверяем нашлись ли элементы и если да, то выходим из цикла с полученным результатом
 				if new_elems.get('count') != None:
 					method_status = True
-					break
 			except:
 				pass
-			if time_index >= time_out:
-				loger.file_log(text = 'Can\'t find dashboard, you should check current element at page by yourself', text_type = 'ERROR  ')
-				method_status = False
+			if method_status:
 				break
+			if time_index >= time_out:
+				if skip_error_message:
+					break
+				else:
+					loger.file_log(text = 'Can\'t find dashboard, you should check current element at page by yourself', text_type = 'ERROR  ')
+					break
 			time_index += 1
 		# если элементы есть, то  выбираем нужные значения: текст, объект, состояние
 		if method_status:
@@ -39,11 +43,11 @@ class Vats_tools(tools.Uis_tools):
 				result[current_dashboard.text] = {'object':current_dashboard, 'status':dashboard_select_status}
 		return result
 
-	def dash_create_new_dashboard(self, dash_board_name = None, timeOut = 120):
+	def dash_create_new_dashboard(self, dash_board_name = None, timeOut = 120, breakONerror = False):
 	# (С) создаем новый Дашборд. считаем, что вкладка\страница уже открыта и количество доступных меньше допустимого максимума
 		method_status = False
 		# находим иконку для добавления и нажимаем
-		add_buttons = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'dashboards-page-button-\'')
+		add_buttons = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'dashboards-page-button-\'', timeOut = 5)
 		if type(add_buttons.get('count')) == int:
 			for add_button in add_buttons.get('elements'):
 				if add_button.get_attribute('data-ref') == 'btnIconEl':
@@ -218,10 +222,25 @@ class Vats_tools(tools.Uis_tools):
 						sys.exit()
 		# проверяем, что осталось вкладок на одну меньше
 		if method_status:
-			# print(existing_dashboards)
-			if self.dash_define_existing_dashboards().get(dash_board_name) == None:
-				loger.file_log(text = 'Dashboard: {}, was deleted'.format(dash_board_name), text_type = 'SUCCESS')
-				return True
+			time_index = 0
+			while True:
+				# ищем кнопку добавления нового Дашборда, после удаления она однозначно должна быть
+				add_buttons = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'dashboards-page-button-\'', timeOut = 1)
+				if type(add_buttons.get('count')) == int:
+					# если размер количества уменьшился на 1, то считаем что удаление прошло успешно
+					if len(state_befor_deleting) - len (self.dash_define_existing_dashboards(time_out = 1, skip_error_message = True)) == 1:
+						method_status = True
+				if method_status:
+					break	
+				if time_index >= time_out:
+					loger.file_log(text = 'Can\'t delete dashboard (result check). Method: dash_delete_dashboard', text_type = 'ERROR  ')
+					if breakONerror is True:
+						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
+						self.close_browser
+						sys.exit()
+		if method_status:
+			loger.file_log(text = 'Dashboard: {}, was deleted'.format(dash_board_name), text_type = 'SUCCESS')
+			return True
 		else:
 			loger.file_log(text = 'Can\'t delete dashboard: {}'.format(dash_board_name), text_type = 'ERROR  ')
 			return False
