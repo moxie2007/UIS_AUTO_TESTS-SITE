@@ -30,8 +30,7 @@ asi = asi_tools.Asi_tools(driver)
 configLK.set_lk_parametrs(source_name = 'LK')
 tools.login_to(url = configLK.get_login_url, user = configLK.get_user_name, password = configLK.get_pass)
 
-'''переход в список сайтов
-	переход в настройки сайта'''
+'''переход в список сайтов, переход в настройки сайта'''
 tools.lk_sidemenu_navigation (item_menu = ['Сайты'],  timeOut = 120)
 # переходим в редактирование сайта ns-studio.su или siteaasi1.webdev.uiscom.ru
 asi.sites_edit_site(site_name = 'ns-studio.su', timeOut = 120)

@@ -106,3 +106,11 @@ class Asi_tools(tools.Uis_tools):
 
 		print('1:')
 		print(count_list)
+
+
+	def find_login_ppc(self, ac_type = 'yandex.direct'): # 'google.adwords'
+		count_list = []
+		//*[@id="sitesettings-page-tableview-1136-record-17234"]/tbody/tr
+		//*[@id="sitesettings-page-sitemanagement-sitesettings-view-integrationitem-yandex_metrika-1138-innerCt"]
+		//*[@id="sitesettings-page-sitemanagement-sitesettings-view-integrationitem-universal_analytics-1234"]
+		pass
