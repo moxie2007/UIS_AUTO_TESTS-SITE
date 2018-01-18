@@ -2,7 +2,7 @@
 import time
 from time import gmtime, strftime
 import datetime
-from datetime import datetime
+# from datetime import datetime
 import os, sys, codecs, sqlite3, re
 
 import multiprocessing.dummy as multiprocessing
@@ -93,18 +93,33 @@ class Uis_tools(start_uis_test.Global_unit):
 		time.sleep(timeOut)
 		return 'timeout'
 			
-	def wait_for_event (self, action, timeout = 120):
-		#(С!) новая ожидалка НЕ работает и пока наверное не нужна.
-		driver = self.driver
-		p = multiprocessing.Pool()
-		timer = time.sleep(timeout)
-
-		results=[]
-		for r  in p.imap_unordered(lambda f: f(),[a,b,c]):
-			if r:
+	def wait_for_results (self, time_data = None, time_out = 120):
+	#(С) новая ожидалка, что бы работало, этот метод нужно разместить до и после исполняемого модуля. 
+	# Первый вызов формирует значение начала ожидани, второй конец и проверку на таймаут. в time_data ставим значение первого вызова
+		# определяем текущее время и записываем его в словарь
+		today = datetime.datetime.today() # системный вызов
+		method_state = False
+		result = time_data
+		while True:
+			# если это первый вход, то записываем время начала действия
+			if time_data == None:
+				result = {}
+				result['start_time'] = today.timestamp()
 				break
-		print(results)
-		p.close()
+			# если это проверка на тайм_аут 
+			if type(time_data) == dict and time_data.get('start_time') != None:
+				result['current_time'] = today.timestamp()
+				method_state = True
+				break
+		# если есть два значения для расчета интервала, то вычисляем разницу
+		if method_state:
+			if time_data.get('current_time') - time_data.get('start_time') >= time_out:
+				result['result'] = True
+			else:
+				result['result'] = False
+		else:
+			result['result'] = False		
+		return result
 
 	def goto(self, url = None, breakONerror = False, delete_cookies = False):
 	# осуществляет переход по URL 
@@ -274,12 +289,13 @@ class Uis_tools(start_uis_test.Global_unit):
 		loger.file_log(text = "Finish sanity test with Error's", text_type = 'SUCCESS')
 		sys.exit()
 	
-	def click_element(self, element_definition, breakONerror = False, timeOut = 120):
+	def click_element(self, element_definition, breakONerror = False, scroll_to_element = True, timeOut = 120):
 	# (C) выполняет нажатие на эллемент
 		try:
 			current_object = self.displayed_element(element_definition = element_definition, timeOut = timeOut)
 			if current_object.get('state'):
-				self.page_scrolling_to_the_element(page_object = current_object.get('element'))
+				if scroll_to_element:
+					self.page_scrolling_to_the_element(page_object = current_object.get('element'))
 				current_object.get('element').click()
 			else:
 				loger.file_log(text = 'can not click ' + str(element_definition) , text_type = 'ERROR  ')
@@ -311,8 +327,6 @@ class Uis_tools(start_uis_test.Global_unit):
 			hover.perform()
 		else:
 			loger.file_log(text = 'You can\'t move mouse to the None object' , text_type = 'ERROR  ')
-
-
 
 	def definition_current_url(self, breakONerror = True):
 	# определяет текущий URL браузера

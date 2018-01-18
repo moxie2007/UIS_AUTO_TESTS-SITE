@@ -1,4 +1,5 @@
-import sys, time
+import sys, time, datetime
+# import datetime
 import tools, start_uis_test, pageElements
 import loger 
 from loger import Loger as loger
@@ -12,14 +13,15 @@ class Vats_tools(tools.Uis_tools):
 
 	def dash_define_existing_dashboards(self, time_out = 120, skip_error_message = False):
 	# (C!G)определяем существующие дашборды, возвращаем название, объект, стату(выбран объект или нет)
-		time_index = 0
+		step_await = self.wait_for_results()
 		method_status = False
 		result = {}
+		# method_status = False
 		while True:
 			method_status = False
 			# ищем вкладки, вкладок может и не быть
 			try:
-				new_elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'data-boundview, \'-tabbar-tabbar-mode-\'')
+				new_elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'data-boundview, \'-tabbar-tabbar-mode-\'', timeOut = 1)
 				# проверяем нашлись ли элементы и если да, то выходим из цикла с полученным результатом
 				if new_elems.get('count') != None:
 					method_status = True
@@ -27,13 +29,12 @@ class Vats_tools(tools.Uis_tools):
 				pass
 			if method_status:
 				break
-			if time_index >= time_out:
+			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
 				if skip_error_message:
 					break
 				else:
 					loger.file_log(text = 'Can\'t find dashboard, you should check current element at page by yourself', text_type = 'ERROR  ')
 					break
-			time_index += 1
 		# если элементы есть, то  выбираем нужные значения: текст, объект, состояние
 		if method_status:
 			for current_dashboard in new_elems.get('elements'):
@@ -125,7 +126,9 @@ class Vats_tools(tools.Uis_tools):
 		state_befor_deleting = existing_dashboards #фиксируем состояние до удаления, для сравнения с результатом по завершению метода
 		# получаем список всех созданных дашбордов и если он не пустой то находим выбранный
 		if len(existing_dashboards.keys()) > 0:
-			time_index = 0
+			today = datetime.datetime.today()
+			start_method_time = today.timestamp()
+			step_await = self.wait_for_results()
 			while True:
 				method_status = False
 				for dash_board in existing_dashboards.keys():
@@ -134,31 +137,31 @@ class Vats_tools(tools.Uis_tools):
 						if dash_board == dash_board_name:
 							# наводим курсор на объект
 							self.move_cursor_to_the_object(current_object = existing_dashboards.get(dash_board).get('object'))
-							method_status = True
+							# если иконка редактирования появилась, то дальше иначе снова наводим курсор
+							if type(self.elements_list(object_type = 'span', search_type = 'contains', mask = 'class, \'x-tab-edit-btn-inner\'', timeOut = 1).get('count')) == int:
+								method_status = True
 							break
 				# если искомая вкладка не была найдена в статусе актив то смотрим, а есть ли нужная вкладка и если ДА то кликаем на нее
 				# если вкладки нет вообще, то нужно прервать метод (выходим из if в статусе False)
 				if dash_board_name in existing_dashboards.keys() and method_status == False:
-					self.click_element(element_definition = existing_dashboards.get(dash_board_name).get('object'))
+					self.click_element(element_definition = existing_dashboards.get(dash_board_name).get('object'), scroll_to_element = False)
 					existing_dashboards = self.dash_define_existing_dashboards()
 				if dash_board_name not in existing_dashboards.keys() and method_status == False:
 					loger.file_log(text = 'There is no dasboard with name: {}\t. Method: vats_tools.dash_delete_dashboard'.format(dash_board_name), text_type = 'ERROR  ')
 					break
-				
 				if method_status:
 					break
-				if time_index >= time_out:
+				# если время вышло, а результат ожидаемый не получен
+				if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
 					loger.file_log(text = 'Can\'t click to the Create button', text_type = 'ERROR  ')
 					if breakONerror is True:
 						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 						self.close_browser
 						sys.exit()
-					break
-			time.sleep(1)
-			time_index += 1
+					break				
 		# ищем иконку редактирования дашборда и нажимаем на нее	
 		if method_status:
-			time_index = 0
+			step_await = self.wait_for_results()
 			while True:
 				method_status = False
 				edit_tabs_btns = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'class, \'x-tab-edit-btn-inner\'', timeOut = 1)
@@ -168,9 +171,10 @@ class Vats_tools(tools.Uis_tools):
 						if self.identity_of_the_child_to_the_parent(parent = existing_dashboards.get(dash_board_name).get('object'), child = edit_btn).get('result'):
 							self.click_element(element_definition = edit_btn)
 							method_status = True
+				
 				if method_status:
 					break
-				if time_index >= time_out:
+				if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
 					loger.file_log(text = 'Can\'t click to the Create button', text_type = 'ERROR  ')
 					if breakONerror is True:
 						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
@@ -178,8 +182,8 @@ class Vats_tools(tools.Uis_tools):
 						sys.exit()
 		# ищем кнопки..\иконку удаления и их родительские объекты
 		if method_status:
-			time_index = 0
 			delete_btns_list = {}
+			step_await = self.wait_for_results()
 			while True:
 				method_status = False
 				delete_tabs_btns = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'componentid, \'dashboards-page-ul-usualbutton-remove-\'', timeOut = 1)
@@ -190,7 +194,7 @@ class Vats_tools(tools.Uis_tools):
 					method_status = True
 				if method_status:
 					break
-				if time_index >= time_out:
+				if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
 					loger.file_log(text = 'Can\'t find the Garbage\Delete icon button', text_type = 'ERROR  ')
 					if breakONerror is True:
 						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
@@ -198,7 +202,7 @@ class Vats_tools(tools.Uis_tools):
 						sys.exit()
 		# ищем поле редактирования названия Дашборда
 		if method_status:
-			time_index = 0
+			step_await = self.wait_for_results()
 			while True:
 				method_status = False
 				edit_tabs_fields = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'dashboards-page-ul-editabledisplayfield-name-\'', timeOut = 1)
@@ -214,7 +218,7 @@ class Vats_tools(tools.Uis_tools):
 									break
 				if method_status:
 					break
-				if time_index >= time_out:
+				if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
 					loger.file_log(text = 'Can\'t click to the delete button. Method: dash_delete_dashboard', text_type = 'ERROR  ')
 					if breakONerror is True:
 						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
@@ -222,7 +226,7 @@ class Vats_tools(tools.Uis_tools):
 						sys.exit()
 		# проверяем, что осталось вкладок на одну меньше
 		if method_status:
-			time_index = 0
+			step_await = self.wait_for_results()
 			while True:
 				# ищем кнопку добавления нового Дашборда, после удаления она однозначно должна быть
 				add_buttons = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'dashboards-page-button-\'', timeOut = 1)
@@ -232,16 +236,17 @@ class Vats_tools(tools.Uis_tools):
 						method_status = True
 				if method_status:
 					break	
-				if time_index >= time_out:
+				if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
 					loger.file_log(text = 'Can\'t delete dashboard (result check). Method: dash_delete_dashboard', text_type = 'ERROR  ')
 					if breakONerror is True:
 						loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 						self.close_browser
 						sys.exit()
+		
 		if method_status:
 			loger.file_log(text = 'Dashboard: {}, was deleted'.format(dash_board_name), text_type = 'SUCCESS')
 			return True
-		else:
+		if method_status == False:
 			loger.file_log(text = 'Can\'t delete dashboard: {}'.format(dash_board_name), text_type = 'ERROR  ')
 			return False
 			if breakONerror is True:
