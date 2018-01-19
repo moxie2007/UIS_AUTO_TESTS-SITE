@@ -253,8 +253,9 @@ class Uis_tools(start_uis_test.Global_unit):
 		# None,[None], None]
 		driver = self.driver
 		step = 1
+		step_await = self.wait_for_results()
 		looking_type = []
-		while step <= timeOut:
+		while True:
 			try:
 				# оставлено для дебага
 				# print("//" + str(object_type) + "[" + str(search_type) + "(@" + str(mask) + ")]")
@@ -279,8 +280,9 @@ class Uis_tools(start_uis_test.Global_unit):
 					break					
 			except:
 				pass
-			step += 1
-			time.sleep(1)
+			if self.wait_for_results (time_data = step_await, time_out = timeOut).get('result'):
+				time.sleep(1)
+				break				
 		return result
 
 	def abort_test(self):
@@ -840,13 +842,12 @@ class Uis_tools(start_uis_test.Global_unit):
 				method_status = False
 				# ищем все вкладке в таблице: Клиенты
 				cliens_menu = self.elements_list(object_type = 'td', search_type = 'contains', mask = 'class, \'x-grid3-hd x-grid3-cell x-grid3-td-\'')
-				if int(cliens_menu.get('count')) >= 1:
+				if type(cliens_menu.get('count')) == int:
 					for item_menu in cliens_menu.get('elements'):
 						# как только находим нужный столбик наводим курсор, что б получить иконку выпадающего меню
 						if str(item_menu.text) == str(filtering_type):
 							id_tab = item_menu
-							hover = ActionChains(self.driver).move_to_element(item_menu)
-							hover.perform()
+							self.move_cursor_to_the_object(current_object = item_menu)
 							method_status = True
 							parent_object = item_menu
 							break
@@ -896,8 +897,7 @@ class Uis_tools(start_uis_test.Global_unit):
 					for item_menu in cliens_menu.get('elements'):
 						# как только находим строку в меню с текстом: Фильтр, наводим курсор
 						if str(item_menu.text) == 'Фильтр':
-							hover = ActionChains(self.driver).move_to_element(item_menu)
-							hover.perform()
+							self.move_cursor_to_the_object(current_object = item_menu)
 							method_status = True
 							parent_object = item_menu
 							break
@@ -925,12 +925,13 @@ class Uis_tools(start_uis_test.Global_unit):
 					# находим все поля для ввода данных
 					input_fields = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'type, \'text\'')
 					# обходим все найденные эллементы и находим тот, который принадлежит родительскому
-					for field in input_fields.get('elements'):
-					# ищем поле ввода именно для для значения равно					
-						if  self.identity_of_the_child_to_the_parent(parent = parent_object, child = field).get('result'):
-							self.change_value(element_definition = field, text = user_id, breakONerror = False)
-							method_status = True
-							break
+					if type(input_fields.get('count')) == int:
+						for field in input_fields.get('elements'):
+						# ищем поле ввода именно для для значения равно					
+							if  self.identity_of_the_child_to_the_parent(parent = parent_object, child = field).get('result'):
+								self.change_value(element_definition = field, text = user_id, breakONerror = False)
+								method_status = True
+								break
 				if method_status:
 					break
 				if time_index >= timeOut:
@@ -942,9 +943,11 @@ class Uis_tools(start_uis_test.Global_unit):
 					break
 				time.sleep(1)
 				time_index += 1
-		# закрываем все выпадающие окна, нажатием на вкладку (вкладка уже найдена и в повторной проверке не нуждается)
-		self.click_element(element_definition = id_tab)
-		# ожидаем пока в списке клиентов не появися нужное значение и открываем выпадающую кнопку: Перейти в клиентское приложение
+		# закрываем все выпадающие окна, нажатием на header окна Клиентов (если таковой не найден, то долго будет ждать)
+		if method_status:
+			block_header = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-window-header x-window-header-noborder x-unselectable x-panel-icon startmenu-apps-icon x-window-draggable\'')
+			if type(block_header.get('count')) == int:
+				self.click_element(element_definition = block_header.get('elements')[0])
 		if method_status:
 			time_index = 0
 			while True:
