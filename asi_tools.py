@@ -58,10 +58,11 @@ class Asi_tools(tools.Uis_tools):
 
 	def my_navigation(self, tab_name = None, timeOut = 120):
 		mask = 'class, \'x-tab-inner\''
-		tabs = self.elements_list(object_type = 'span', search_type = 'contains', mask = mask, timeOut = timeOut)[1]
-		for item in tabs:
-			if tab_name in item.text:
-				self.click_element(element_definition = item)
+		tabs = self.elements_list(object_type = 'span', search_type = 'contains', mask = mask, timeOut = timeOut)
+		if type(tabs.get('count')) == int:
+			for item in tabs.get('elements'):
+				if tab_name in item.text:
+					self.click_element(element_definition = item)
 		return tabs
 
 	def navigation_int_ac_in_table(self, tab_name = None, timeOut = 120):
