@@ -14,6 +14,14 @@ class LK(object):
 		# Общие настройки-Черный список- поле ввода комментарий	
 		if element == 'konsultant_black_list_add_comment':
 			return ['//*[@id="commonsettings-page-textfield-description-' + str(mask) + '-inputEl"]', None]
+	# ЛК-САЙТФОН
+	# поле ввода: Текст на баннере
+		if element == 'sitephone_banner_text_field':
+			return ['//*[@id="sitephone-page-textfield-title-' + str(mask) + '-inputEl"]', None]
+	# иконка рядом с полем ввода: Текст на баннере
+		if element == 'sitephone_banner_text_error_icon':
+			return ['//*[@id="sitephone-page-textfield-title-' + str(mask) + '-errorEl"]', None]
+
 	# Яндекс
 		if element == 'login_yandex':
 			return ['//*[@id="root"]/div/div[2]/div/div[2]/div/div[2]/div/div/form/div[1]/label/input', None]
@@ -62,6 +70,9 @@ class LK(object):
 			print(int(mask) + 1)
 			return['channels-page-cm-schedulecombo-schedule_id-' + str(int(mask) + 1) + '-trigger-picker"]', None]
 					# channels-page-cm-schedulecombo-schedule_id-1138-trigger-picker
+	# Дашборды - меню дашбордов - кнопка добавления нового дашборда
+		if element == 'dash_top_menu_add_btn':
+			return['div > div > div > div > a > span > span > span', None]
 	# Яндекс
 		if element == 'btn_login_yandex':
 			return ['//*[@id="root"]/div/div[2]/div[1]/div[2]/div/div[2]/div/div/form/div[4]/button[1]/span/span', None]

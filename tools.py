@@ -2,7 +2,7 @@
 import time
 from time import gmtime, strftime
 import datetime
-from datetime import datetime
+# from datetime import datetime
 import os, sys, codecs, sqlite3, re
 
 import multiprocessing.dummy as multiprocessing
@@ -93,18 +93,33 @@ class Uis_tools(start_uis_test.Global_unit):
 		time.sleep(timeOut)
 		return 'timeout'
 			
-	def wait_for_event (self, action, timeout = 120):
-		#(С!) новая ожидалка НЕ работает и пока наверное не нужна.
-		driver = self.driver
-		p = multiprocessing.Pool()
-		timer = time.sleep(timeout)
-
-		results=[]
-		for r  in p.imap_unordered(lambda f: f(),[a,b,c]):
-			if r:
+	def wait_for_results (self, time_data = None, time_out = 120):
+	#(С) новая ожидалка, что бы работало, этот метод нужно разместить до и после исполняемого модуля. 
+	# Первый вызов формирует значение начала ожидани, второй конец и проверку на таймаут. в time_data ставим значение первого вызова
+		# определяем текущее время и записываем его в словарь
+		today = datetime.datetime.today() # системный вызов
+		method_state = False
+		result = time_data
+		while True:
+			# если это первый вход, то записываем время начала действия
+			if time_data == None:
+				result = {}
+				result['start_time'] = today.timestamp()
 				break
-		print(results)
-		p.close()
+			# если это проверка на тайм_аут 
+			if type(time_data) == dict and time_data.get('start_time') != None:
+				result['current_time'] = today.timestamp()
+				method_state = True
+				break
+		# если есть два значения для расчета интервала, то вычисляем разницу
+		if method_state:
+			if time_data.get('current_time') - time_data.get('start_time') >= time_out:
+				result['result'] = True
+			else:
+				result['result'] = False
+		else:
+			result['result'] = False		
+		return result
 
 	def goto(self, url = None, breakONerror = False, delete_cookies = False):
 	# осуществляет переход по URL 
@@ -195,8 +210,9 @@ class Uis_tools(start_uis_test.Global_unit):
 		desired_element = None
 		state = False
 		element_tyte = None
-		step = 1
-		while step <= timeOut:
+		step_await = self.wait_for_results()
+		while True:
+			method_status = False
 			try:
 				# поиск статического объекта (xpath, id и так далее)
 				if type(element_definition) is list:
@@ -210,12 +226,14 @@ class Uis_tools(start_uis_test.Global_unit):
 						element_tyte = desired_element.tag_name
 					except Exception as ex:
 						pass
-					break
-
+					method_status = True
 			except Exception as ex:
 				pass
-			step += 1
-			time.sleep(1)
+			if method_status:
+				break
+			if self.wait_for_results(time_data = step_await, time_out = timeOut).get('result'):
+				break
+			time.sleep(0.1)
 		return {'state':state, 'element_type': element_tyte, 'element': desired_element}
 
 	def page_scrolling_to_the_element(self, page_object = None):
@@ -238,8 +256,9 @@ class Uis_tools(start_uis_test.Global_unit):
 		# None,[None], None]
 		driver = self.driver
 		step = 1
+		step_await = self.wait_for_results()
 		looking_type = []
-		while step <= timeOut:
+		while True:
 			try:
 				# оставлено для дебага
 				# print("//" + str(object_type) + "[" + str(search_type) + "(@" + str(mask) + ")]")
@@ -264,8 +283,9 @@ class Uis_tools(start_uis_test.Global_unit):
 					break					
 			except:
 				pass
-			step += 1
-			time.sleep(1)
+			if self.wait_for_results (time_data = step_await, time_out = timeOut).get('result'):
+				time.sleep(1)
+				break				
 		return result
 
 	def abort_test(self):
@@ -274,12 +294,13 @@ class Uis_tools(start_uis_test.Global_unit):
 		loger.file_log(text = "Finish sanity test with Error's", text_type = 'SUCCESS')
 		sys.exit()
 	
-	def click_element(self, element_definition, breakONerror = False, timeOut = 120):
+	def click_element(self, element_definition, breakONerror = False, scroll_to_element = True, timeOut = 120):
 	# (C) выполняет нажатие на эллемент
 		try:
 			current_object = self.displayed_element(element_definition = element_definition, timeOut = timeOut)
 			if current_object.get('state'):
-				self.page_scrolling_to_the_element(page_object = current_object.get('element'))
+				if scroll_to_element:
+					self.page_scrolling_to_the_element(page_object = current_object.get('element'))
 				current_object.get('element').click()
 			else:
 				loger.file_log(text = 'can not click ' + str(element_definition) , text_type = 'ERROR  ')
@@ -309,10 +330,9 @@ class Uis_tools(start_uis_test.Global_unit):
 		if current_object != None:
 			hover = ActionChains(driver).move_to_element(current_object)
 			hover.perform()
+			time.sleep(0.2) # потому, что следующее действие доступно быстрее чем может быть выполнено
 		else:
 			loger.file_log(text = 'You can\'t move mouse to the None object' , text_type = 'ERROR  ')
-
-
 
 	def definition_current_url(self, breakONerror = True):
 	# определяет текущий URL браузера
@@ -340,6 +360,7 @@ class Uis_tools(start_uis_test.Global_unit):
 
 	def lk_sidemenu_navigation(self, item_menu = ['Общие отчёты', 'Аудитория'],  timeOut = 120, breakONerror = True):
 	# (!) навигация по основному меню (добавить timeout для while и зацепиться за родителя)
+		method_status = False
 		time_index = 0
 		inner_index = 2
 		current_elems = []
@@ -408,6 +429,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			new_url = self.definition_current_url()
 			if new_url != old_url:
 				loger.file_log(text = 'West menu items switching was done', text_type = 'SUCCESS')
+				method_status = True
 				break
 			if time_index >= timeOut:
 				loger.file_log(text = 'Can\'t choose next item  from west menu', text_type = 'ERROR  ')
@@ -417,6 +439,7 @@ class Uis_tools(start_uis_test.Global_unit):
 				break
 			time.sleep(1)
 			time_index += 1
+		return method_status
 
 	def top_menu_navigation(self, tab_name = None, timeOut = 20, new_elemets_status = False):
 	#(С!) навигация по табам (вкладки вверху, активные выделяются зеленым)
@@ -608,7 +631,8 @@ class Uis_tools(start_uis_test.Global_unit):
 #-------------------------------------------------------------------------------------------------
 	def switch_env(self, selected_element = None, server_name = 'sitecw2.webdev.uiscom.ru',  breakONerror = True):
 	# (!)изменяет тестовый сервер в личном кабинете
-		driver = self.driver
+		method_status = False
+		# driver = self.driver
 		url_action_start = self.definition_current_url()
 		# ищем окно с текущим сайтом (должно быть одно)
 		site_dropdown = self.elements_list(object_type = 'input', mask = 'class, \'x-form-field x-form-text x-form-text-cm-siteselector\'')
@@ -638,6 +662,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			while True:
 				if str(url_action_start) != str(self.definition_current_url()):
 					loger.file_log(text = 'Necessary server was chosen', text_type = 'SUCCESS')
+					method_status = True
 					break
 				if time_index >= 20 and breakONerror is True:
 					self.close_browser
@@ -645,7 +670,8 @@ class Uis_tools(start_uis_test.Global_unit):
 					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 					sys.exit()			
 				time.sleep(1)
-				time_index += 1	
+				time_index += 1
+			return	method_status
 
 	def login_to(self, url = None, user = None, password = None, breakONerror = True):
 	# логин в систему		
@@ -826,13 +852,12 @@ class Uis_tools(start_uis_test.Global_unit):
 				method_status = False
 				# ищем все вкладке в таблице: Клиенты
 				cliens_menu = self.elements_list(object_type = 'td', search_type = 'contains', mask = 'class, \'x-grid3-hd x-grid3-cell x-grid3-td-\'')
-				if int(cliens_menu.get('count')) >= 1:
+				if type(cliens_menu.get('count')) == int:
 					for item_menu in cliens_menu.get('elements'):
 						# как только находим нужный столбик наводим курсор, что б получить иконку выпадающего меню
 						if str(item_menu.text) == str(filtering_type):
 							id_tab = item_menu
-							hover = ActionChains(self.driver).move_to_element(item_menu)
-							hover.perform()
+							self.move_cursor_to_the_object(current_object = item_menu)
 							method_status = True
 							parent_object = item_menu
 							break
@@ -882,8 +907,7 @@ class Uis_tools(start_uis_test.Global_unit):
 					for item_menu in cliens_menu.get('elements'):
 						# как только находим строку в меню с текстом: Фильтр, наводим курсор
 						if str(item_menu.text) == 'Фильтр':
-							hover = ActionChains(self.driver).move_to_element(item_menu)
-							hover.perform()
+							self.move_cursor_to_the_object(current_object = item_menu)
 							method_status = True
 							parent_object = item_menu
 							break
@@ -911,12 +935,13 @@ class Uis_tools(start_uis_test.Global_unit):
 					# находим все поля для ввода данных
 					input_fields = self.elements_list(object_type = 'input', search_type = 'contains', mask = 'type, \'text\'')
 					# обходим все найденные эллементы и находим тот, который принадлежит родительскому
-					for field in input_fields.get('elements'):
-					# ищем поле ввода именно для для значения равно					
-						if  self.identity_of_the_child_to_the_parent(parent = parent_object, child = field).get('result'):
-							self.change_value(element_definition = field, text = user_id, breakONerror = False)
-							method_status = True
-							break
+					if type(input_fields.get('count')) == int:
+						for field in input_fields.get('elements'):
+						# ищем поле ввода именно для для значения равно					
+							if  self.identity_of_the_child_to_the_parent(parent = parent_object, child = field).get('result'):
+								self.change_value(element_definition = field, text = user_id, breakONerror = False)
+								method_status = True
+								break
 				if method_status:
 					break
 				if time_index >= timeOut:
@@ -928,9 +953,11 @@ class Uis_tools(start_uis_test.Global_unit):
 					break
 				time.sleep(1)
 				time_index += 1
-		# закрываем все выпадающие окна, нажатием на вкладку (вкладка уже найдена и в повторной проверке не нуждается)
-		self.click_element(element_definition = id_tab)
-		# ожидаем пока в списке клиентов не появися нужное значение и открываем выпадающую кнопку: Перейти в клиентское приложение
+		# закрываем все выпадающие окна, нажатием на header окна Клиентов (если таковой не найден, то долго будет ждать)
+		if method_status:
+			block_header = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-window-header x-window-header-noborder x-unselectable x-panel-icon startmenu-apps-icon x-window-draggable\'')
+			if type(block_header.get('count')) == int:
+				self.click_element(element_definition = block_header.get('elements')[0])
 		if method_status:
 			time_index = 0
 			while True:
@@ -947,7 +974,7 @@ class Uis_tools(start_uis_test.Global_unit):
 								method_result['client_type'] =  type_field.text
 						try:
 							method_result['client_id'] = client_name.text
-							# print('клиент: {}'.format(client_name.text))
+							print('клиент: {}'.format(client_name.text))
 							ActionChains(self.driver).move_to_element(client_name)
 							ActionChains(self.driver).context_click(client_name).perform()
 							method_status = True
