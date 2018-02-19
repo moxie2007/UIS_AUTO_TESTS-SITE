@@ -20,85 +20,36 @@ class Vats_tools(tools.Uis_tools):
 		indexing_step = 0 #условие на случай если кнопка добавить будет появляться раньше вкладок
 		while True:
 			method_status = False
-			# ищем вкладки, вкладок может и не быть
-			# time.sleep(3)
-			new_elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'data-boundview, \'dashboards-page-analytics-dashboards-tabbar-tabbar-mode-\'', timeOut = 1)
-			# проверяем нашлись ли элементы и если да, то выходим из цикла с полученным результатом
-			if type(new_elems.get('count')) == int:
-				if DEBUG:
-					print('---'*10)
-					print(new_elems.get('elements'))
-					print('--'*10)
-					for item in new_elems.get('elements'):
-						print(item.text)
-					print('---'*10)
-
-				for dashboard_tab in new_elems.get('elements'):
-					tab_state = False
-					my_step_await = self.wait_for_results()
-					step_1 = False
-					step_2 = False
-					active_status = False
-					while True: # без явного выхода по тайм ауте - потому, что объект существует но свойство может не успеть прогрузиться (создание\удаление)
-						# print(dashboard_tab)
+			# определяем есть ли иконка: Добавить дашюорд
+			if self.displayed_element(element_definition = lk_elements.BUTTON('dash_top_menu_add_btn'),  timeOut = 3).get('state'):
+				# ищем вкладки, вкладок может и не быть
+				new_elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'data-boundview, \'dashboards-page-analytics-dashboards-tabbar-tabbar-mode-\'', timeOut = 1)
+				# пытаемся получить для каждой вкладки данные
+				if type(new_elems.get('count')) == int:
+					for current_item_index in range(new_elems.get('count')):
 						try:
-							if  type(dashboard_tab.text) == str:
-								# print(dashboard_tab.text)
-								step_1 = True
-						except:
-							# print('text')
+							if 'active' in new_elems.get('elements')[current_item_index].get_attribute('class'):
+								result[new_elems.get('elements')[current_item_index]] = {'name':new_elems.get('elements')[current_item_index].text,'status':True}
+							else:
+								result[new_elems.get('elements')[current_item_index]] = {'name':new_elems.get('elements')[current_item_index].text,'status':False}
+						except Exception as ex:
 							pass
-						try:
-							if type(dashboard_tab.get_attribute('class')) == str:
-								# print(dashboard_tab.get_attribute('class'))
-								if r'active' in dashboard_tab.get_attribute('class'):
-									active_status = True
-								step_2 = True
-						except:
-							# print('class')
-							pass
-						if step_1:
-							if step_2:
-								result[dashboard_tab] = {'name':dashboard_tab.text,'status':active_status}
-								# print(result)
-								
-						try:
-							if len(result.get(dashboard_tab)) == 2:
-								method_status = True
-								break
-						except:
-							new_elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'data-boundview, \'dashboards-page-analytics-dashboards-tabbar-tabbar-mode-\'', timeOut = 1)
-						
-
-
-						if self.wait_for_results (time_data = my_step_await, time_out = 10).get('result'):
-							print('---ERROR---'*100)
-							break
-				# try:
-				# 	print(dashboard_tab, type(dashboard_tab.get_attribute('class')), type(dashboard_tab.text), tab_state)
-				# 	if type(dashboard_tab.get_attribute('class')) == str:
-				# 		if 'tab-active' in dashboard_tab.get_attribute('class'):
-				# 			tab_state = True
-				# 			if type(dashboard_tab.text) == str:
-				# 				result[dashboard_tab] = {'name':dashboard_tab.text,'status':tab_state}
-				# 				method_status = True
-				# except Exception as ex:
-				# 	pass
-				if method_status:
-					break
-					# print('-----'*20)
+					if len(result) == new_elems.get('count'):
+						method_status = True
+					else:
+						result.clear()
 			if method_status:
 				break
 			if self.wait_for_results (time_data = step_await, time_out = (time_out) + 1).get('result'):
 				break
+			time.sleep(0.1)
 		return result
 		
-
 	def dash_create_new_dashboard(self, dash_board_name = None, timeOut = 120, breakONerror = False):
 	# (С) создаем новый Дашборд. считаем, что вкладка\страница уже открыта и количество доступных меньше допустимого максимума
 		method_status = False
 		# получаем текущее состояние вкладки дашборды
-		current_dashboards_state = self.dash_define_existing_dashboards(skip_error_message = True)
+		current_dashboards_state = self.dash_define_existing_dashboards(skip_error_message = True, time_out = 3)
 		# находим иконку для добавления и нажимаем
 		add_buttons = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'dashboards-page-button-\'', timeOut = 5)
 		if type(add_buttons.get('count')) == int:
@@ -176,7 +127,7 @@ class Vats_tools(tools.Uis_tools):
 
 
 							# try:
-							end_method_state = self.dash_define_existing_dashboards(skip_error_message = True, time_out = 2, DEBUG = False)
+							end_method_state = self.dash_define_existing_dashboards(skip_error_message = True, time_out = 2)
 							# print(len(end_method_state), len(current_dashboards_state))
 							# if len(end_method_state) - len(current_dashboards_state) == 1:
 							# ищем какая вкладка в статусу True
@@ -203,8 +154,8 @@ class Vats_tools(tools.Uis_tools):
 	def dash_delete_dashboard(self, dash_board_name = None, breakONerror = False, time_out = 120):
 	# (С!)удаляем дашборд, для удаления используем название. Удаляем один из многих подходящий дашборд (переделать)
 		method_status = False
-		# получаем список всех имеющихся дашбордов
-		existing_dashboards = self.dash_define_existing_dashboards()
+		# получаем список всех имеющихся дашбордов (предполагаем что они есть)
+		existing_dashboards = self.dash_define_existing_dashboards(time_out = 5)
 		state_befor_deleting = existing_dashboards #фиксируем состояние до удаления, для сравнения с результатом по завершению метода
 		# получаем список всех созданных дашбордов и если он не пустой то находим выбранный
 		if len(existing_dashboards.keys()) > 0:
@@ -216,9 +167,10 @@ class Vats_tools(tools.Uis_tools):
 				for dash_board in existing_dashboards.keys():
 					if existing_dashboards.get(dash_board).get('status'):
 						# проверяем, совпадает ли название удаляемого даша и если нет, то переключаемся на нужный
-						if dash_board.get('name') == dash_board_name:
+						if existing_dashboards.get(dash_board).get('name') == dash_board_name:
+							# print(existing_dashboards.get(dash_board),existing_dashboards.get(dash_board).get('name'), type(dash_board), dash_board)
 							# наводим курсор на объект
-							self.move_cursor_to_the_object(current_object = existing_dashboards.get(dash_board))
+							self.move_cursor_to_the_object(current_object = dash_board)
 							# если иконка редактирования появилась, то дальше иначе снова наводим курсор
 							if type(self.elements_list(object_type = 'span', search_type = 'contains', mask = 'class, \'x-tab-edit-btn-inner\'', timeOut = 1).get('count')) == int:
 								method_status = True
@@ -250,6 +202,7 @@ class Vats_tools(tools.Uis_tools):
 				# перебираем все найденные и если есть тот, который является потомком вкладки, жмем\кликаем на него
 				if type(edit_tabs_btns.get('count')) == int:
 					for edit_btn in edit_tabs_btns.get('elements'):
+				
 						if self.identity_of_the_child_to_the_parent(parent = existing_dashboards.get(dash_board_name).get('object'), child = edit_btn).get('result'):
 							self.click_element(element_definition = edit_btn)
 							method_status = True
@@ -339,8 +292,9 @@ class Vats_tools(tools.Uis_tools):
 	def dash_define_widgets_at_dashboard(self, time_out = 120):
 	# (СG) метод определяющий общее количество виджетов на дашборде, возвращает созданные не пустые
 		method_status = False
-		time_index = 0
+		dashboard_elements = {}
 		dashboard_boxes = 0
+		test_step_await = self.wait_for_results()
 		while True:
 			try:
 				# пироги
@@ -354,9 +308,9 @@ class Vats_tools(tools.Uis_tools):
 				pass					
 			try:
 				# пустые блоки
-				empty = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-component-emptydash-component-\'',timeOut = 1)
+				empty = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-container-emptydash-component-\'',timeOut = 1)
 				for empty_widget in empty.get('elements'):
-					if 'x-component analytics-dashboards-emptydash x-component-ul' in str(empty_widget.get_attribute('class')):
+					if 'x-container analytics-dashboards-emptydash x-container-ul' in str(empty_widget.get_attribute('class')):
 						dashboard_boxes += 1
 			except:
 				pass	
@@ -398,14 +352,13 @@ class Vats_tools(tools.Uis_tools):
 				dashboard_boxes = 0
 			# условие выхода из цикла: или найдены все элементы или истекло время поиска
 			if method_status == True:
-				dashboard_elements = {'existing_widgets':{'sticker':all_stikers, 'pie':all_pies, 'histogram':all_histograms, 'graph':all_graphs}} 
+				# dashboard_elements = {'existing_widgets':{'sticker':all_stikers, 'pie':all_pies, 'histogram':all_histograms, 'graph':all_graphs}} 
+				dashboard_elements['existing_widgets'] = {'sticker':all_stikers, 'pie':all_pies, 'histogram':all_histograms, 'graph':all_graphs}
 				break
-			if time_index >= time_out:
+			if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
 				loger.file_log(text = 'Can\'t find dashboard, you should check current element at page by yourself', text_type = 'ERROR  ')
 				method_status = False
-				break
-			time.sleep(1)
-			time_index += 1	
+				break	
 		return dashboard_elements
 
 	def dash_get_widget_name(self, widget = None):
@@ -475,7 +428,6 @@ class Vats_tools(tools.Uis_tools):
 			result = blocks
 
 		return result
-
 
 	def dash_create_new_dash(self, widget_type = 'stiker'):
 	#(CG!) создание нового виджета/ необходимо определить доступновть к созданию

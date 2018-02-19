@@ -342,10 +342,11 @@ class Wg_tools(tools.Uis_tools):
 
 	@property
 	def sitephone_define_display_at_site_status(self):
-	# (СG)определяем статус выключателя капча: True включена, False выключена, считаем что элемент уже есть на странице
-		result = {'status_of_lable':None,'id_is':None}
+	# (СG)определяем статус выключателя показывать на сайте: True включен, False выключен, считаем что элемент уже есть на странице
+		# result = {'status_of_lable':None,'id_is':None}
+		result = {}
 		needed_elements =  self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'sitephone-page-cm-switchbox-is_visible-\'')
-		if needed_elements.get('count') >= 1:	
+		if type(needed_elements.get('count')) == int:	
 			for needed_element in needed_elements.get('elements'):
 				try:
 					if 'Показывать на сайте' in needed_element.text:
@@ -359,14 +360,8 @@ class Wg_tools(tools.Uis_tools):
 				result['status_of_lable'] = self.execute_console_command(command = "return window.Ext.getCmp('sitephone-page-cm-switchbox-is_visible-" + str(result.get('id_is')) + "').getValue()")
 			else:
 				loger.file_log(text = 'Can\'t define button status', text_type = 'ERROR  ')
-				self.close_browser
-				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
-				sys.exit()
 		else:
 			loger.file_log(text = 'Can\'t find "Show at site" text at page' , text_type = 'ERROR  ')
-			self.close_browser
-			loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
-			sys.exit()
 		return result
 	
 	def sitephone_change_display_at_site_status(self, label_state = False, timeOut = 120):
@@ -383,6 +378,7 @@ class Wg_tools(tools.Uis_tools):
 			self.click_element(element_definition = lk_elements.LABELE('sitephone_display_at_site_lable', mask = str(before_labele_state.get('id_is'))), timeOut = timeOut)
 			time_index = 0
 			# ожидаем результата. состояние должно смениться от текущего
+			step_await = self.wait_for_results()
 			while time_index <= timeOut:
 				after_labele_state = self.sitephone_define_display_at_site_status
 				if after_labele_state.get('status_of_lable') != before_labele_state.get('status_of_lable'):
@@ -396,6 +392,149 @@ class Wg_tools(tools.Uis_tools):
 				time.sleep(1)
 				time_index += 1	
 		return {'lable_state': after_labele_state.get('status_of_lable'), 'operation_status':result}
+
+	@property
+	def sitephone_define_checkbox_disp_at_pc(self):
+	# (CG) определяем состояние чек-бокса: Показывать на устройствах ПК (метод без проверки наличия элемента на странице)
+		result = {}
+		needed_elements =  self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'sitephone-page-checkboxfield-desktop-\'')
+		# если найдены объекты, то в цикле по ним, ищем статус нашего.
+		if type(needed_elements.get('count')) == int:
+			for check_item in needed_elements.get('elements'):
+				# определяем какой из объектов основной, у этого объекта нет свойства: data-ref
+				if type(check_item.get_attribute('data-ref')) == type(None):
+					# таокой элемент должен быть один, если нет сообщаем в лог берется только первое значение
+					object_class = check_item.get_attribute('class') # вынесено для того, что бы все проверки проводить над одним объектом (переключение на странице)
+					if 'x-form-cb-checked' in object_class:
+						if result.get('object_id') == None:
+							result['state'] = True
+							result['object_id'] = check_item.get_property('id')
+							if 'x-item-disabled' in object_class:
+								result['status'] = False
+							else:
+								result['status'] = True
+						else:
+							loger.file_log(text = 'In the method (widget_tools.sitephone_define_checkbox_disp_at_pc) were found more than one object at page' , text_type = 'WARNING')
+					else: #продумать логику этого условия, может работать не корректно
+						if result.get('object_id') == None:
+							result['state'] = False
+							result['object_id'] = check_item.get_property('id')
+							if 'x-item-disabled' in object_class:
+								result['status'] = False
+							else:
+								result['status'] = True
+						else:
+							loger.file_log(text = 'In the method (widget_tools.sitephone_define_checkbox_disp_at_pc) were found more than one object at page' , text_type = 'WARNING')
+		# result: state - выбран\невыбран, status - активен\неактивен, id - элемента
+		return result
+
+	@property
+	def sitephone_define_checkbox_disp_at_sitephone(self):
+	# (CG) определяем состояние чек-бокса: Показывать на устройствах Смартфон (метод без проверки наличия элемента на странице)
+		result = {}
+		needed_elements =  self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'sitephone-page-checkboxfield-mobile-\'')
+		# если найдены объекты, то в цикле по ним, ищем статус нашего.
+		if type(needed_elements.get('count')) == int:
+			for check_item in needed_elements.get('elements'):
+				# определяем какой из объектов основной, у этого объекта нет свойства: data-ref
+				if type(check_item.get_attribute('data-ref')) == type(None):
+					# таокой элемент должен быть один, если нет сообщаем в лог берется только первое значение
+					object_class = check_item.get_attribute('class') # вынесено для того, что бы все проверки проводить над одним объектом (переключение на странице)
+					if 'x-form-cb-checked' in object_class:
+						if result.get('object_id') == None:
+							result['state'] = True
+							result['object_id'] = check_item.get_property('id')
+							if 'x-item-disabled' in object_class:
+								result['status'] = False
+							else:
+								result['status'] = True
+						else:
+							loger.file_log(text = 'In the method (widget_tools.sitephone_define_checkbox_disp_at_sitephone) were found more than one object at page' , text_type = 'WARNING')
+					else: #продумать логику этого условия, может работать не корректно
+						if result.get('object_id') == None:
+							result['state'] = False
+							result['object_id'] = check_item.get_property('id')
+							if 'x-item-disabled' in object_class:
+								result['status'] = False
+							else:
+								result['status'] = True
+						else:
+							loger.file_log(text = 'In the method (widget_tools.sitephone_define_checkbox_disp_at_sitephone) were found more than one object at page' , text_type = 'WARNING')
+		# result: state - выбран\невыбран, status - активен\неактивен, id - элемента
+		return result
+
+	@property
+	def sitephone_define_checkbox_disp_at_tablet(self):
+	# (CG) определяем состояние чек-бокса: Показывать на устройствах Планшет (метод без проверки наличия элемента на странице)
+		result = {}
+		needed_elements =  self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'sitephone-page-checkboxfield-tablet-\'')
+		# если найдены объекты, то в цикле по ним, ищем статус нашего.
+		if type(needed_elements.get('count')) == int:
+			for check_item in needed_elements.get('elements'):
+				# определяем какой из объектов основной, у этого объекта нет свойства: data-ref
+				if type(check_item.get_attribute('data-ref')) == type(None):
+					# таокой элемент должен быть один, если нет сообщаем в лог берется только первое значение
+					object_class = check_item.get_attribute('class') # вынесено для того, что бы все проверки проводить над одним объектом (переключение на странице)
+					if 'x-form-cb-checked' in object_class:
+						if result.get('object_id') == None:
+							result['state'] = True
+							result['object_id'] = check_item.get_property('id')
+							if 'x-item-disabled' in object_class:
+								result['status'] = False
+							else:
+								result['status'] = True
+						else:
+							loger.file_log(text = 'In the method (widget_tools.sitephone_define_checkbox_disp_at_tablet) were found more than one object at page' , text_type = 'WARNING')
+					else: #продумать логику этого условия, может работать не корректно
+						if result.get('object_id') == None:
+							result['state'] = False
+							result['object_id'] = check_item.get_property('id')
+							if 'x-item-disabled' in object_class:
+								result['status'] = False
+							else:
+								result['status'] = True
+						else:
+							loger.file_log(text = 'In the method (widget_tools.sitephone_define_checkbox_disp_at_tablet) were found more than one object at page' , text_type = 'WARNING')
+		# result: state - выбран\невыбран, status - активен\неактивен, id - элемента
+		return result
+
+	@property
+	def sitephone_define_fieldstate_text_at_banner(self):
+	# (CG) определяем состояние поле ввода: Текст на баннере (метод без проверки наличия элемента на странице)
+		result = {}
+		needed_elements =  self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'sitephone-page-textfield-title-\'')
+		# проверяем нашлись ли объекты на странице
+		id_mask = None
+		if type(needed_elements.get('count')) == int:
+			for object_item in needed_elements.get('elements'):
+				# выбираем родительский объект поля: Текст на баннере
+				if type(object_item.get_attribute('data-ref')) == type(None):
+					values_object_id = object_item.get_attribute('id').split('-')
+					for value in values_object_id:
+						try:
+							id_mask = int(value)
+							break
+						except:
+							pass
+			# через маску родительского объекта, получаем значение из поля ввода
+			if type(id_mask) == int:
+				input_object = self.displayed_element(element_definition = lk_elements.INPUT("sitephone_banner_text_field", mask = id_mask))
+				if input_object.get('state'):
+					result['text'] = input_object.get('element').get_attribute('value')			
+				# проверяем отображена ли иконка ошибок, после того как текст получен, должна и иконка быть
+				error_icon_object = self.displayed_element(element_definition = lk_elements.INPUT("sitephone_banner_text_error_icon", mask = id_mask), timeOut = 0.5)
+				if error_icon_object.get('state'):
+					result['error_icon_state'] = True
+				else:
+					result['error_icon_state'] = False		
+		return result
+
+						
+
+
+
+
+
 
 	@property
 	def sitephone_define_animation_status(self):

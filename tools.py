@@ -210,8 +210,9 @@ class Uis_tools(start_uis_test.Global_unit):
 		desired_element = None
 		state = False
 		element_tyte = None
-		step = 1
-		while step <= timeOut:
+		step_await = self.wait_for_results()
+		while True:
+			method_status = False
 			try:
 				# поиск статического объекта (xpath, id и так далее)
 				if type(element_definition) is list:
@@ -225,12 +226,14 @@ class Uis_tools(start_uis_test.Global_unit):
 						element_tyte = desired_element.tag_name
 					except Exception as ex:
 						pass
-					break
-
+					method_status = True
 			except Exception as ex:
 				pass
-			step += 1
-			time.sleep(1)
+			if method_status:
+				break
+			if self.wait_for_results(time_data = step_await, time_out = timeOut).get('result'):
+				break
+			time.sleep(0.1)
 		return {'state':state, 'element_type': element_tyte, 'element': desired_element}
 
 	def page_scrolling_to_the_element(self, page_object = None):
@@ -327,6 +330,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		if current_object != None:
 			hover = ActionChains(driver).move_to_element(current_object)
 			hover.perform()
+			time.sleep(0.2) # потому, что следующее действие доступно быстрее чем может быть выполнено
 		else:
 			loger.file_log(text = 'You can\'t move mouse to the None object' , text_type = 'ERROR  ')
 
@@ -356,6 +360,7 @@ class Uis_tools(start_uis_test.Global_unit):
 
 	def lk_sidemenu_navigation(self, item_menu = ['Общие отчёты', 'Аудитория'],  timeOut = 120, breakONerror = True):
 	# (!) навигация по основному меню (добавить timeout для while и зацепиться за родителя)
+		method_status = False
 		time_index = 0
 		inner_index = 2
 		current_elems = []
@@ -424,6 +429,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			new_url = self.definition_current_url()
 			if new_url != old_url:
 				loger.file_log(text = 'West menu items switching was done', text_type = 'SUCCESS')
+				method_status = True
 				break
 			if time_index >= timeOut:
 				loger.file_log(text = 'Can\'t choose next item  from west menu', text_type = 'ERROR  ')
@@ -433,6 +439,7 @@ class Uis_tools(start_uis_test.Global_unit):
 				break
 			time.sleep(1)
 			time_index += 1
+		return method_status
 
 	def top_menu_navigation(self, tab_name = None, timeOut = 20, new_elemets_status = False):
 	#(С!) навигация по табам (вкладки вверху, активные выделяются зеленым)
@@ -624,7 +631,8 @@ class Uis_tools(start_uis_test.Global_unit):
 #-------------------------------------------------------------------------------------------------
 	def switch_env(self, selected_element = None, server_name = 'sitecw2.webdev.uiscom.ru',  breakONerror = True):
 	# (!)изменяет тестовый сервер в личном кабинете
-		driver = self.driver
+		method_status = False
+		# driver = self.driver
 		url_action_start = self.definition_current_url()
 		# ищем окно с текущим сайтом (должно быть одно)
 		site_dropdown = self.elements_list(object_type = 'input', mask = 'class, \'x-form-field x-form-text x-form-text-cm-siteselector\'')
@@ -654,6 +662,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			while True:
 				if str(url_action_start) != str(self.definition_current_url()):
 					loger.file_log(text = 'Necessary server was chosen', text_type = 'SUCCESS')
+					method_status = True
 					break
 				if time_index >= 20 and breakONerror is True:
 					self.close_browser
@@ -661,7 +670,8 @@ class Uis_tools(start_uis_test.Global_unit):
 					loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 					sys.exit()			
 				time.sleep(1)
-				time_index += 1	
+				time_index += 1
+			return	method_status
 
 	def login_to(self, url = None, user = None, password = None, breakONerror = True):
 	# логин в систему		
@@ -964,7 +974,7 @@ class Uis_tools(start_uis_test.Global_unit):
 								method_result['client_type'] =  type_field.text
 						try:
 							method_result['client_id'] = client_name.text
-							# print('клиент: {}'.format(client_name.text))
+							print('клиент: {}'.format(client_name.text))
 							ActionChains(self.driver).move_to_element(client_name)
 							ActionChains(self.driver).context_click(client_name).perform()
 							method_status = True
