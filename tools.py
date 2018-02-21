@@ -545,8 +545,8 @@ class Uis_tools(start_uis_test.Global_unit):
 	# (C) поиск значения: Всего записей, со страниц с таблицами возвращает список: текстовое значение и id cтраницы 
 		page_items = []
 		result = []
-		time_index = 0
 		page = self.get_header_text
+		step_await = self.wait_for_results()
 		while True:
 			elems = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-toolbar-text x-box-item x-toolbar-item x-toolbar-text-ul\'', timeOut = 1)
 			empty_list = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'class, \'x-grid-empty\'', timeOut = 1)
@@ -565,14 +565,12 @@ class Uis_tools(start_uis_test.Global_unit):
 				break		
 			if len(page_items) > 1:
 				loger.file_log(text = 'Was found more than one item. Please check result of the method: get_total_list_values_count', text_type = 'ERROR  ')
-				break			
-			if time_index >= timeOut:
+				break
+			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):		
 				loger.file_log(text = 'Can\'t found counter of the items', text_type = 'ERROR  ')
 				result.append(None)
 				result.append(page)
 				break			
-			time.sleep(1)
-			time_index += 1	
 		return result
 
 	@property
