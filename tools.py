@@ -361,9 +361,9 @@ class Uis_tools(start_uis_test.Global_unit):
 	def lk_sidemenu_navigation(self, item_menu = ['Общие отчёты', 'Аудитория'],  timeOut = 120, breakONerror = True):
 	# (!) навигация по основному меню (добавить timeout для while и зацепиться за родителя)
 		method_status = False
-		time_index = 0
 		inner_index = 2
 		current_elems = []
+		step_await = self.wait_for_results()
 		# оперделяем какой URL до изменения страницы (какая страница)
 		while True:
 			try:
@@ -373,14 +373,11 @@ class Uis_tools(start_uis_test.Global_unit):
 					break
 			except:
 				pass
-			if time_index >= timeOut:
+			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
 				self.close_browser
 				loger.file_log(text = 'Can\'t find Header text from this page', text_type = 'ERROR  ')
 				if self.breakONerror == True:
 					self.abort_test()
-				# break
-			time.sleep(1)
-			time_index += 1
 		# проверяем не открыто ли уже головное меню (например: Общие отчёты, Список обращений, Служебные)
 		try:
 			mask = 'class, \'x-grid-tree-node-expanded  x-grid-row\''
@@ -391,7 +388,7 @@ class Uis_tools(start_uis_test.Global_unit):
 					item_menu.remove(item_menu[0])
 		except Exception as ex:
 			print('lk_sidemenu_navigation:  ', ex)
-		time_index = 0
+		step_await = self.wait_for_results()
 		while True: 
 		# ищем пункт меню котовый к нажатию
 			mask = 'class, \' x-grid-cell-treecolumn x-grid-cell-first x-grid-cell-last x-unselectable x-grid-cell-treecolumn ul-tree-node-depth-' + str(inner_index) + '\''
@@ -417,28 +414,24 @@ class Uis_tools(start_uis_test.Global_unit):
 				break
 			if len(item_menu) == 0:
 				break
-			if time_index >= timeOut:
+			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
 				self.close_browser
 				loger.file_log(text = 'Can\'t choose your\'s menu item', text_type = 'ERROR  ')
 				break
-			time.sleep(1)
-			time_index += 1
 		# проверка на то, что нужная страница открыта (для этого, url должен измениться)
-		time_index = 0
+		step_await = self.wait_for_results()
 		while True:
 			new_url = self.definition_current_url()
 			if new_url != old_url:
 				loger.file_log(text = 'West menu items switching was done', text_type = 'SUCCESS')
 				method_status = True
 				break
-			if time_index >= timeOut:
+			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
 				loger.file_log(text = 'Can\'t choose next item  from west menu', text_type = 'ERROR  ')
 				if breakONerror is True:
 					self.close_browser		
 					break
 				break
-			time.sleep(1)
-			time_index += 1
 		return method_status
 
 	def top_menu_navigation(self, tab_name = None, timeOut = 20, new_elemets_status = False):
