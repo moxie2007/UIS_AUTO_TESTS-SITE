@@ -284,7 +284,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			except:
 				pass
 			if self.wait_for_results (time_data = step_await, time_out = timeOut).get('result'):
-				time.sleep(1)
+				time.sleep(1) # надо закоментировать и проверить что работает без этого
 				break				
 		return result
 
@@ -321,7 +321,7 @@ class Uis_tools(start_uis_test.Global_unit):
 				current_object.get('element').send_keys(str(text))
 		except Exception as ex:
 			loger.file_log(text = 'Сan\'t change data in the element ' + str(element_definition) , text_type = 'ERROR  ')
-			if breakONerror == True:
+			if breakONerror:
 				self.abort_test()
 	
 	def move_cursor_to_the_object(self, current_object = None):
@@ -334,16 +334,49 @@ class Uis_tools(start_uis_test.Global_unit):
 		else:
 			loger.file_log(text = 'You can\'t move mouse to the None object' , text_type = 'ERROR  ')
 
-	def definition_current_url(self, breakONerror = True):
+	def get_tab_name(self, time_out = 120):
+	# (СG) метод определяющий текст вкладки браузера.
+		driver = self.driver
+		step_await = self.wait_for_results()
+		result = None
+		while True:
+			method_status = False
+			try:
+				result = driver.title
+			except:
+				pass
+			if type(result) == str:
+				method_status = True
+			if method_status:
+				break
+			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
+				loger.file_log(text = 'Time is out, can\'t define tab name' , text_type = 'ERROR  ')
+				break
+		return result
+	
+	def definition_current_url(self, breakONerror = False, time_out = 120):
 	# определяет текущий URL браузера
 		driver = self.driver
-		try:
-			url =  driver.current_url
-		except Exception as ex:
-			loger.file_log(text = 'can not click ' + str(element_definition) , text_type = 'ERROR  ')
-			if self.breakONerror == True:
-						self.abort_test()
-		return url
+		step_await = self.wait_for_results()
+		while True:
+			method_status = False
+			try:
+				url =  driver.current_url
+				method_status = True
+			except Exception as ex:
+				pass
+			if method_status:
+				break
+			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
+				loger.file_log(text = 'Time is out, can\'t define URL' , text_type = 'ERROR  ')
+				break
+		if method_status:
+			return url
+		else:
+			if breakONerror:
+				self.abort_test()
+			else:
+				return None
 	
 	def choose_from_dropdown(self, dropdown_element = None, current_item = None):
 	# (C!)выбирает конкретное значение для из выпадающего списка. выпадающий список передается как элемент из pageElements, а значение как строковое наименование
@@ -620,7 +653,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		driver.switch_to_window(driver.window_handles[-1])
 
 #-------------------------------------------------------------------------------------------------
-	def switch_env(self, selected_element = None, server_name = 'sitecw2.webdev.uiscom.ru',  breakONerror = True):
+	def switch_env(self, selected_element = None, server_name = 'sitecw2.webdev.uiscom.ru',  breakONerror = True, time_out = 120):
 	# (!)изменяет тестовый сервер в личном кабинете
 		method_status = False
 		# driver = self.driver
@@ -665,7 +698,8 @@ class Uis_tools(start_uis_test.Global_unit):
 			return	method_status
 
 	def login_to(self, url = None, user = None, password = None, breakONerror = True):
-	# логин в систему		
+	# логин в систему
+		method_status = False		
 		try:
 			self.goto(url, breakONerror)			
 		except Exception as ex:
@@ -684,24 +718,28 @@ class Uis_tools(start_uis_test.Global_unit):
 				self.close_browser
 				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
 				sys.exit()
-		
-		time_index = 0
-		# проверка на то, что открыто именно то, что мы и ожидали. по умолчанию открывается: Обзорный отчет 
+		# проверка на то, что открыто именно то, что мы и ожидали. в заголовке вкладки появиться должно брендирование
+		step_await = self.wait_for_results()
+		brend_names = ['UIS','CoMagic']
 		while True:
-			try:
-				header = self.get_header_text
-				if header[0] == 'Обзорный отчет':
-					loger.file_log(text = 'Open page done. URL is ' + str(url), text_type = 'SUCCESS')
-					break
-			except:
-				pass
-			if time_index >= 20 and breakONerror is True:
-				self.close_browser
-				loger.file_log(text = 'Can not open necessary URL', text_type = 'ERROR  ')
+			method_status = False
+			for brand in brend_names:
+				if brand in self.get_tab_name(time_out = 2):
+					loger.file_log(text = 'Open page done. URL is {}'.format(str(url)), text_type = 'SUCCESS')
+					method_status = True
+			if method_status:
+				break
+			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):		
+				loger.file_log(text = 'Can\'t found counter of the items', text_type = 'ERROR  ')
+				break
+		if method_status:
+			pass
+		else:
+			loger.file_log(text = 'Can not open necessary URL', text_type = 'ERROR  ')
+			if breakONerror:
 				loger.file_log(text = 'Finish sanity test with Error', text_type = 'SUCCESS')
-				sys.exit()
-			time.sleep(1)
-			time_index += 1
+				self.abort_test()
+
 
 	def login_to_system(self, url = None, user = None, password = None, breakONerror = True, system_is = None):
 	# логин в системы интеграции и лк боя
