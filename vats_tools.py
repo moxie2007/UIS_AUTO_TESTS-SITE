@@ -426,8 +426,97 @@ class Vats_tools(tools.Uis_tools):
 				print(key)
 
 			result = blocks
-
 		return result
+
+	def dash_get_widget_type_from_creation_preview(self, time_out = 120):
+	# (C)определяем какой тип виджета выбран
+		result = {}
+		definition_obj = None # объект по которому будем определять выделение кнопки (выбрана или нет)
+		test_step_await = self.wait_for_results()
+		test_status = False
+		# ищем выделеный объект в секции типа виджета
+		while True:
+			if test_status == False:
+				all_type_btns = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'id, \'dashboards-page-button-\'', timeOut = 0.2)
+				# в цикле, по всем объектиам, ищем признак выделения объекта в его классе
+				if type(all_type_btns.get('count')) == int:
+					for btn in all_type_btns.get('elements'):
+						if 'x-btn-pressed' in btn.get_attribute('class'):
+							definition_obj = btn
+							btn_id_mask = btn.get_attribute('id').split('dashboards-page-button-')[1]
+							test_status = True
+			if test_status:
+				break		
+			if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+				loger.file_log(text = 'Can\'t find type definition object for widget. Method: {}'.format('dash_get_widget_type_from_creation_preview'), text_type = 'ERROR  ')
+				break
+		if test_status:
+			# ищем все объекты определяющие ТИП кнопки виджета и проверяем связь потомок-предок. для кого совпадет, тот и есть искомый тип активного виджета
+			test_step_await = self.wait_for_results()
+			while True:
+				test_status = False
+				all_type_definition_btns = self.elements_list(object_type = 'span', search_type = 'contains', mask = 'id, \'dashboards-page-button-' + str(btn_id_mask) + '-btnIconEl\'', timeOut = 0.2)
+				if type(all_type_definition_btns.get('count')) == int:
+					for type_btn in all_type_definition_btns.get('elements'):
+						if self.identity_of_the_child_to_the_parent(parent = definition_obj, child = type_btn).get('result'):
+							result['widget_type_name'] = str(type_btn.get_attribute('class')).split('x-btn-icon-el x-btn-icon-el-default-medium ul-btn-icon-chart-')[1].replace(' ','')
+							test_status = True
+							break
+				if test_status:
+					break		
+				if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+					loger.file_log(text = 'Can\'t find type name object for widget. Method: {}'.format('dash_get_widget_type_from_creation_preview'), text_type = 'ERROR  ')
+					break
+		return result
+
+	def dash_get_widget_dimension_from_creation_preview(self, time_out = 120):
+	# (C)определяем в каком разрезе отображен виджета, пока работает только с пирагом и гистограммой
+		result = {}
+		test_status = False
+		# определяем родительский объект открытой формы создания\редактирования виджета
+		creation_windows = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-ext-comp-\'', timeOut = time_out)
+		if type(creation_windows.get('count')) == int:
+			for main_item in creation_windows.get('elements'):
+				if main_item.get_attribute('class') == 'x-window ul-window-no-body-paddings x-layer x-window-ul x-closable x-window-closable x-window-ul-closable x-border-box ul-floating':
+					creation_window = main_item
+					break
+		# определяем какой перед нами тип виджета
+		widget_current_name = self.dash_get_widget_type_from_creation_preview().get('widget_type_name')
+		if widget_current_name in ['pie','column']:
+			test_status = True
+		else:
+			loger.file_log(text = 'This widget type: {}, hasn\'t got a demention. Method: {}'.format(self.dash_get_widget_type_from_creation_preview().get('widget_type_name'), 'dash_get_widget_dimension_from_creation_preview'), text_type = 'ERROR  ')
+		# определяем какое стоит значение: в разрезе чего, значение берем как текст с предпросмотра.
+		if test_status:
+			test_step_await = self.wait_for_results()
+			while True:
+				test_status = False
+				widget_priview_texts = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-cm-highchart-\'', timeOut = 1)	
+				if type(widget_priview_texts.get('count')) == int:
+					for item_text in widget_priview_texts.get('elements'):
+						try: # тут при многократной смене значений быват так, что объект не успевает быть загружен
+							if self.identity_of_the_child_to_the_parent(parent = creation_window, child = item_text).get('result'):
+								if item_text.get_attribute('class') == 'x-component x-box-item x-component-ul':
+									if widget_current_name == 'column':
+										if len(item_text.get_attribute('id').split('-')) == 5:
+											result['dimension_text'] = str(item_text.text.split('\n')[1])		
+									if widget_current_name == 'pie':
+										if len(item_text.get_attribute('id').split('-')) == 12:
+											if item_text.text.lower() in ['не в разрезе']: # возможные варианты пустых данных
+												result['dimension_text'] = str(item_text.text)
+											else:
+												result['dimension_text'] = str(item_text.text.split('\n')[0])
+									test_status = True
+									break
+						except Exception as ex:
+							pass
+				if test_status:
+					break		
+				if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+					loger.file_log(text = 'Can\'t define dimension text at preview. Method: {}'.format('dash_get_widget_dimension_from_creation_preview'), text_type = 'ERROR  ')
+					break
+		return result
+
 
 	def dash_create_new_dash(self, widget_type = 'stiker'):
 	#(CG!) создание нового виджета/ необходимо определить доступновть к созданию

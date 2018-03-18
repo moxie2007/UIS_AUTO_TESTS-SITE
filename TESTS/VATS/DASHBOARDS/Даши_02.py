@@ -1,4 +1,5 @@
 '''
+Время выполнения: 45 минут.
 Тест: перебор всех основных комбинаций по созданию нового дашборда.
 поля: Что считаем, Как считаем, В разрезе чего.
 требования: 
@@ -9,6 +10,7 @@
 '''
 import sys
 sys.path.append('C:\\UIS_AUTO_TESTS\\UIS_AUTO_TESTS-SITE')
+sys.path.append('d:\\Work\AUTOMATION\\SELENIUM_SCREEPTS')
 
 import  random, sys, time
 from time import gmtime, strftime
@@ -252,7 +254,8 @@ if __name__ == '__main__':
 								if type(dimension_values.get('count')) == int:
 									# ищем все объекты родительского типа (вкладки в меню)
 									dimension_folders_items = {}
-									parent_dimension_icons_objects = tools_test.elements_list(object_type = 'img', search_type = 'contains', mask = 'class, \' x-tree-elbow-img x-tree-elbow-end-plus x-tree-expander\'')
+									# так как однотипный объект: иконка ПЛЮС, в зависимости от нахождения определяется разными классами определяем её как: 'class, \' x-tree-elbow-img x-tree-elbow-end-plus x-tree-expander\'')
+									parent_dimension_icons_objects = tools_test.elements_list(object_type = 'img', search_type = 'contains', mask = 'class, \'-plus x-tree-expander\'')
 									if type(parent_dimension_icons_objects.get('count')) == int:
 										for folder_object in parent_dimension_icons_objects.get('elements'):
 											# по каждому объектиу поднимаеися на 4 значения вверх (потом завязать на родитель потомок)
@@ -291,13 +294,28 @@ if __name__ == '__main__':
 									for current_value in dimension_fildes_value.get('elements'):
 										if current_value.get_attribute('value') == current_dimension_key:
 											test_status = True
-											time.sleep(1)
+											time.sleep(0.2) # системное ожидание что бы  Selenium не забивал сокет
 											break
 								if test_status:
 									break						
 								if tools_test.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
-									print('Не удалось получить выставленное значений из: В разрезе чего. строка теста{}'.format(297))
+									print('Не удалось получить выставленное значений из: В разрезе чего. строка теста{} искомое значение {}'.format(300, current_dimension_key))
 									break
+			# проверяем, что на превью отображено искомок значение. Варианта может быть два: совпадение и 0 - в случае если данных на такой агрегатор нет
+							if test_status:
+								test_step_await = tools_test.wait_for_results()
+								while True:
+									test_status = False
+									displayed_widget_text = va.dash_get_widget_dimension_from_creation_preview().get('dimension_text').lower()
+									if displayed_widget_text in ['0', 'не в разрезе', current_dimension_key.lower()]:
+										if displayed_widget_text in ['0','не в разрезе']:
+											loger.file_log(text = 'Widget without data. You should chek it by hands. Demension: {}'.format(current_dimension_key), text_type = 'WARNING')
+										test_status = True
+									if test_status:
+										break						
+									if tools_test.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+										print('Не удалось получить выставленное значений из: В разрезе чего. ожидаемое значение:{}, полученное значение: {}'.format(current_dimension_key, displayed_widget_text))
+										break
 		# закрываем браузер
 		if test_status:
 			main_unit.close_browser
