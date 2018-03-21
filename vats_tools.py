@@ -520,8 +520,29 @@ class Vats_tools(tools.Uis_tools):
 
 	def dash_create_new_dash(self, widget_type = 'stiker'):
 	#(CG!) создание нового виджета/ необходимо определить доступновть к созданию
-
 		pass
+
+	def dash_creation_form_get_list_of_preview_tabs(self, time_out = 120):
+	#(С) возвращает количество и список вкладок 
+		result = {}
+		test_step_await = self.wait_for_results()
+		while True:
+			test_status = False
+			tabs = self.elements_list(object_type = 'table', search_type = 'contains', mask = 'id, \'tableview\'')
+			if type(tabs.get('count')) == int:
+				result = tabs
+				for tab in tabs.get('elements'):
+					if '-item-selected' in tab.get_attribute('class'):
+						result['active_tab'] = {tab:tab.text}
+						test_status = True
+						break
+			if test_status:
+				break						
+			if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+				loger.file_log(text = 'Can\'t define tab\'s from creation widget form. Method: {}'.format('dash_creation_form_get_list_of_preview_tabs'), text_type = 'ERROR  ')
+				break	
+		return result
+
 
 
 
