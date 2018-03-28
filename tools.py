@@ -284,7 +284,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			except:
 				pass
 			if self.wait_for_results (time_data = step_await, time_out = timeOut).get('result'):
-				time.sleep(1) # надо закоментировать и проверить что работает без этого
+				# time.sleep(1) # надо закоментировать и проверить что работает без этого
 				break				
 		return result
 
@@ -697,7 +697,7 @@ class Uis_tools(start_uis_test.Global_unit):
 				time_index += 1
 			return	method_status
 
-	def login_to(self, url = None, user = None, password = None, breakONerror = True):
+	def login_to(self, url = None, user = None, password = None, breakONerror = True, time_out = 120):
 	# логин в систему
 		method_status = False		
 		try:

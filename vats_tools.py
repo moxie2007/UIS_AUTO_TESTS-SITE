@@ -1,5 +1,5 @@
-import sys, time, datetime
-# import datetime
+import sys, time, datetime, json
+from datetime import datetime
 import tools, start_uis_test, pageElements
 import loger 
 from loger import Loger as loger
@@ -299,16 +299,16 @@ class Vats_tools(tools.Uis_tools):
 			try:
 				# пироги
 				all_pies = []
-				pie = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-analytics-dashboards-piedash-\'',timeOut = 1)
+				pie = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-analytics-dashboards-piedash-\'',timeOut = 0.2)
 				for pie_widget in pie.get('elements'):
-					if str(pie_widget.get_attribute('class')) == 'x-container analytics-dashboards-dash x-container-ul x-box-layout-ct':
+					if len(pie_widget.get_attribute('id').split('-')) == 6:
 						dashboard_boxes += 1
 						all_pies.append(pie_widget)
 			except:
 				pass					
 			try:
-				# пустые блоки
-				empty = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-container-emptydash-component-\'',timeOut = 1)
+				# пустые блоки (пока идентификацию оставляем по классу, потому что классы для пользователей UIS и Сomagic совпадают)
+				empty = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-container-emptydash-component-\'',timeOut = 0.2)
 				for empty_widget in empty.get('elements'):
 					if 'x-container analytics-dashboards-emptydash x-container-ul' in str(empty_widget.get_attribute('class')):
 						dashboard_boxes += 1
@@ -317,9 +317,9 @@ class Vats_tools(tools.Uis_tools):
 			try:
 				all_histograms = []
 				# гистограмма
-				gisto = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-analytics-dashboards-columndash-\'',timeOut = 1)
+				gisto = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-analytics-dashboards-columndash-\'',timeOut = 0.2)
 				for gistogramma in gisto.get('elements'):
-					if 'x-container analytics-dashboards-dash x-container-ul x-box-layout-ct' == str(gistogramma.get_attribute('class')):
+					if len(gistogramma.get_attribute('id').split('-')) == 6:
 						dashboard_boxes += 2
 						all_histograms.append(gistogramma)
 			except:
@@ -327,9 +327,9 @@ class Vats_tools(tools.Uis_tools):
 			try:
 				all_graphs = []
 				# грфик
-				graphs = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-analytics-dashboards-linedash-\'',timeOut = 1)
+				graphs = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-analytics-dashboards-linedash-\'',timeOut = 0.2)
 				for graph in graphs.get('elements'):
-					if 'x-container analytics-dashboards-dash x-container-ul x-box-layout-ct' == str(graph.get_attribute('class')):
+					if len(graph.get_attribute('id').split('-')) == 6:
 						dashboard_boxes += 4
 						all_graphs.append(graph)
 			except:
@@ -337,9 +337,9 @@ class Vats_tools(tools.Uis_tools):
 			try:
 				all_stikers = []
 				# стикер
-				stikers = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-analytics-dashboards-stickerdash-\'',timeOut = 1)
+				stikers = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-analytics-dashboards-stickerdash-\'',timeOut = 0.2)
 				for stiker in stikers.get('elements'):
-					if 'x-container analytics-dashboards-dash x-container-ul x-box-layout-ct' == str(stiker.get_attribute('class')):
+					if len(stiker.get_attribute('id').split('-')) == 6:
 						dashboard_boxes += 1
 						all_stikers.append(stiker)
 			except:
@@ -352,7 +352,6 @@ class Vats_tools(tools.Uis_tools):
 				dashboard_boxes = 0
 			# условие выхода из цикла: или найдены все элементы или истекло время поиска
 			if method_status == True:
-				# dashboard_elements = {'existing_widgets':{'sticker':all_stikers, 'pie':all_pies, 'histogram':all_histograms, 'graph':all_graphs}} 
 				dashboard_elements['existing_widgets'] = {'sticker':all_stikers, 'pie':all_pies, 'histogram':all_histograms, 'graph':all_graphs}
 				break
 			if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
@@ -517,7 +516,6 @@ class Vats_tools(tools.Uis_tools):
 					break
 		return result
 
-
 	def dash_create_new_dash(self, widget_type = 'stiker'):
 	#(CG!) создание нового виджета/ необходимо определить доступновть к созданию
 		pass
@@ -525,17 +523,41 @@ class Vats_tools(tools.Uis_tools):
 	def dash_creation_form_get_list_of_preview_tabs(self, time_out = 120):
 	#(С) возвращает количество и список вкладок 
 		result = {}
+		# получаем родительский объект колонки
+		test_step_await = self.wait_for_results()
+		while True:
+			test_status = False	
+			parent_objects = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-cm-singlecolumngrid-presetGroupsList-\'')	
+			if type(parent_objects.get('count')) == int:
+				for item in parent_objects.get('elements'):
+					if len(item.get_attribute('id').split('-')) == 6:
+						parrent_of_the_list = item
+						test_status = True
+						break
+			if test_status:
+				break						
+			if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+				loger.file_log(text = 'Can\'t define parent column object from creation widget form. Method: {}'.format('dash_creation_form_get_list_of_preview_tabs'), text_type = 'ERROR  ')
+				break			
 		test_step_await = self.wait_for_results()
 		while True:
 			test_status = False
-			tabs = self.elements_list(object_type = 'table', search_type = 'contains', mask = 'id, \'tableview\'')
+			tabs = self.elements_list(object_type = 'table', search_type = 'contains', mask = 'id, \'tableview\'', timeOut = 0.2)
 			if type(tabs.get('count')) == int:
-				result = tabs
-				for tab in tabs.get('elements'):
-					if '-item-selected' in tab.get_attribute('class'):
-						result['active_tab'] = {tab:tab.text}
-						test_status = True
-						break
+				# проверяем в том ли столбце найденые значения и если да, то записываем
+				current_result = []
+				for group_tab in tabs.get('elements'):
+					if self.identity_of_the_child_to_the_parent(parent = parrent_of_the_list, child = group_tab).get('result'):
+						current_result.append(group_tab)
+				if len(current_result) != 0:
+					result['count'] = len(current_result)
+					result['elements'] = current_result
+				if type(result.get('count')) == int:
+					for tab in result.get('elements'):
+						if '-item-selected' in tab.get_attribute('class'):
+							result['active_tab'] = {tab:tab.text}
+							test_status = True
+							break
 			if test_status:
 				break						
 			if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
@@ -543,10 +565,330 @@ class Vats_tools(tools.Uis_tools):
 				break	
 		return result
 
+	def dash_creation_form_get_presets_items_from_list(self, time_out = 120):
+	#(С) возвращает список конкретных пресетов с открытой вкладки 
+		result = {}
+		# получаем родительский объект колонки
+		test_step_await = self.wait_for_results()
+		while True:
+			test_status = False	
+			parent_objects = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-cm-singlecolumngrid-presetsList-\'')	
+			if type(parent_objects.get('count')) == int:
+				for item in parent_objects.get('elements'):
+					if len(item.get_attribute('id').split('-')) == 6:
+						parrent_of_the_items = item
+						test_status = True
+						break
+			if test_status:
+				break						
+			if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+				loger.file_log(text = 'Can\'t define parent column object from creation widget form. Method: {}'.format('dash_creation_form_get_list_of_preview_tabs'), text_type = 'ERROR  ')
+				break
+		# получаем список всех всех значений			
+		test_step_await = self.wait_for_results()
+		while True:
+			test_status = False
+			items = self.elements_list(object_type = 'table', search_type = 'contains', mask = 'id, \'tableview\'')
+			if type(items.get('count')) == int:
+				# проверяем в том ли столбце найденые значения и если да, то записываем
+				current_result = []
+				for new_item in items.get('elements'):
+					if self.identity_of_the_child_to_the_parent(parent = parrent_of_the_items, child = new_item).get('result'):
+						current_result.append(new_item)
+				if len(current_result) != 0:
+					result['count'] = len(current_result)
+					result['elements'] = current_result
+				if type(result.get('count')) == int:
+					for tab in result.get('elements'):
+						if '-item-selected' in tab.get_attribute('class'):
+							result['active_tab'] = {tab:tab.text}
+							break
+					test_status = True
+			if test_status:
+				break						
+			if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+				loger.file_log(text = 'Can\'t define item\'s from creation widget form. Method: {}'.format('dash_creation_form_get_list_of_preview_tabs'), text_type = 'ERROR  ')
+				break	
+		return result
 
+	def dash_creation_form_change_presets_folder(self, new_folder_name = None, time_out = 120):
+	#(С) переключаемся на определенную папку с пресетами в случае успеха переключения статус метода: True
+		result = {}
+		# получаем текущее имя активной папки
+		test_step_await = self.wait_for_results()
+		while True:
+			test_status = False
+			active_tab = self.dash_creation_form_get_list_of_preview_tabs(time_out = time_out).get('active_tab')
+			try:
+				values = active_tab.keys()
+				if len(values) == 1:
+					for value in values:
+						active_tab_name = active_tab.get(value)
+					test_status = True
+				else:
+					loger.file_log(text = 'Can\'t define active folder at form for creation widget. Method: {}'.format('dash_creation_form_change_presets_folder'), text_type = 'ERROR  ')
+			except Exception as ex:
+				loger.file_log(text = 'System-logic ERROR in method: {}'.format('dash_creation_form_change_presets_folder'), text_type = 'ERROR  ')
+			if test_status:
+				break						
+			if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+				loger.file_log(text = 'Can\'t define item\'s from creation widget form. Method: {}'.format('dash_creation_form_change_presets_folder'), text_type = 'ERROR  ')
+				break
+		# сравниваем с необходимой
+		if test_status:
+			test_step_await = self.wait_for_results()
+			test_status = False
+			while True:
+				if str(active_tab_name) == str(new_folder_name):
+					loger.file_log(text = 'The folder: {}, already chosen'.format(new_folder_name) , text_type = 'SUCCESS')
+					break
+			# если не совпало, то пытаемся переключиться
+				else:
+				# ищем объект которому соотносится new_folder_name
+					folders = self.dash_creation_form_get_list_of_preview_tabs(time_out = time_out)
+					for folder in folders.get('elements'):
+						if str(folder.text) == str(new_folder_name):
+							self.click_element(element_definition = folder)
+							test_status = True
+				if test_status:
+					break						
+				if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+					loger.file_log(text = 'Can\'t choose new folder. Method: {}'.format('dash_creation_form_change_presets_folder'), text_type = 'ERROR  ')
+					break
+		# дожидаемся пока активной не станет необходимая папка
+		if test_status:
+			test_step_await = self.wait_for_results()
+			while True:
+				test_status = False
+				for item_index in self.dash_creation_form_get_list_of_preview_tabs(time_out = time_out).get('active_tab').values():
+					if item_index == new_folder_name:
+						test_status = True
+						loger.file_log(text = 'The folder was choosen from: {}, to {}'.format(active_tab_name, new_folder_name) , text_type = 'SUCCESS')
+				if test_status:
+					result = True
+					break						
+				if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+					loger.file_log(text = '{} can\'t be choosen. Method: {}'.format(new_folder_name, 'dash_creation_form_change_presets_folder'), text_type = 'ERROR  ')
+					break
+		return result
 
+	def dash_creation_form_choose_preset_item(self, new_preset_name = None, time_out = 120):
+	#(!С) переключаемся на определенные пресет в случае успеха переключения статус метода: True
+		result = {}
+		# проверяем что форма создания редактирования виджета есть
+		test_step_await = self.wait_for_results()
+		while True:
+			test_status = False
+			main_forms = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-ext-comp-\'', timeOut = 0.2)
+			if type(main_forms.get('count')) == int:
+				for form in main_forms.get('elements'):
+					if len(form.get_attribute('id').split('-')) == 5:
+						parent_form_is = form
+						test_status = True
+						break
+			if test_status:
+				break						
+			if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+				loger.file_log(text = 'Can\'t find widget creation form. Method: {}'.format('dash_creation_widget_from_preset'), text_type = 'ERROR  ')
+				break
+		# получаем список доступных виджетов
+		if test_status:
+			items = self.dash_creation_form_get_presets_items_from_list(time_out = time_out)
+			if type(items.get('count')) == int:
+				for item in items.get('elements'):
+					if str(item.text) == str(new_preset_name):
+						self.click_element(element_definition = item)
+						break
+		# проверяем, что название на пресете сменилось (название в превью)
+		if test_status:
+			while True:
+				test_status = False
+				widget_previe_names = self.elements_list(object_type = 'label', search_type = 'contains', mask = 'id, \'dashboards-page-label-title-\'', timeOut = 0.2)
+				if type(widget_previe_names.get('count')) == int:
+					for lable_name in widget_previe_names.get('elements'):
+						if len(lable_name.get_attribute('id').split('-')) == 5:
+							if str(lable_name.text) == str(new_preset_name):
+								test_status = True
+								result = True
+								break
+				if test_status:
+					break						
+				if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+					loger.file_log(text = 'Can\'t find widget creation form. Method: {}'.format('dash_creation_widget_from_preset'), text_type = 'ERROR  ')
+					break			
+		return result
 
+	def dash_creation_widget_from_preset(self, widget_folder = None, widget_name = None, time_out = 120):
+	# (CG)создание виджета через пресеты
+		# проверяем что форма создания редактирования виджета есть
+		test_step_await = self.wait_for_results()
+		while True:
+			test_status = False
+			main_forms = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-ext-comp-\'', timeOut = 0.1)
+			if type(main_forms.get('count')) == int:
+				for form in main_forms.get('elements'):
+					if len(form.get_attribute('id').split('-')) == 5:
+						parent_form_is = form
+						test_status = True
+						# получаем количество созданных виджетов
+						current_dashboard = self.dash_define_widgets_at_dashboard(time_out = 1)
+						break
+			if test_status:
+				break						
+			if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+				loger.file_log(text = 'Can\'t find widget creation form. Method: {}'.format('dash_creation_widget_from_preset'), text_type = 'ERROR  ')
+				break
+		# выбираю нужную вкладку
+		if test_status:
+			self.dash_creation_form_change_presets_folder(new_folder_name = widget_folder, time_out = time_out)
+		# выбираю нужный виджет
+			self.dash_creation_form_choose_preset_item(new_preset_name = widget_name, time_out = time_out)
+		# нажимаем кнопку Создать
+		if test_status:
+			test_step_await = self.wait_for_results()
+			while True:
+				test_status = False
+				creation_btns = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'id, \'dashboards-page-ul-mainbutton-save-\'')
+				if type(creation_btns.get('count')) == int:
+					for btn_item in creation_btns.get('elements'):
+						if len(btn_item.get_attribute('id').split('-')) == 6:
+							self.click_element(element_definition = btn_item)
+							test_status = True
+				if test_status:
+					break						
+				if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+					loger.file_log(text = 'Can\'t find creation form. Method: {}'.format('dash_creation_widget_from_preset'), text_type = 'ERROR  ')
+					break
+		# проверяем, что созданный виджет появился (по количеству виджетов на dashboard)
+		if test_status:
+			test_step_await = self.wait_for_results()
+			while True:
+				test_status = False
+				dashboard_state = self.dash_define_widgets_at_dashboard(time_out = 1)
+				try:
+					for widget_item in dashboard_state.get('existing_widgets'):
+						if len(current_dashboard.get('existing_widgets').get(widget_item)) != dashboard_state.get('existing_widgets').get(widget_item):
+							test_status = True
+							break
+				except:
+					pass
+				if test_status:
+					break						
+				if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+					loger.file_log(text = 'New widget:{} {} wasn\'t created. Method: {}'.format(widget_folder, widget_name,'dash_creation_widget_from_preset'), text_type = 'ERROR  ')
+					break
 
-
-
-
+	def dash_delete_widget(self, widget = {None:{None:None}}, time_out = 120):
+	# (CG)удаление виджета с дашборда, в метод нужно передать {тип виджета:[{имя виджета:легенда\данные с виджета}]}
+	# если не все данные указаны то удаляем первый встреченный (тип и имя обязательны для указания)
+		# получаем список всех виджетов со страницы, страница дашборда должна быть открыта и все виджеты уже есть
+		result = {}
+		widgets_list = self.dash_define_widgets_at_dashboard(time_out = 1)
+		# ищем группу виджетов по ТИПУ
+		test_status = False
+		for group_list in widgets_list.get('existing_widgets'):
+			if str(group_list) == str(list(widget.keys())[0]):
+				# перебираем все виджеты и выбираем те, которые нужны (первичный ключь: ИМЯ)
+				compared_widgets = []
+				items_counter = 0
+				for next_widget in widgets_list.get('existing_widgets').get(group_list):		
+					if self.dash_get_widget_name(widget = next_widget) == list(widget.get(list(widget.keys())[0]).keys())[0]:
+						compared_widgets.append(next_widget)
+						items_counter = len(compared_widgets)
+						# тут может быть ошибка логики, в том случае если виджет не найден 
+				if items_counter == 0:
+					loger.file_log(text = 'Widget wasn\'t found. Method: {}'.format('dash_delete_widget'), text_type = 'ERROR  ')
+					# test_status = True # это хрень надо проверять почему не работает.!!!!!!!!!!!!!!!!!!!
+				elif items_counter > 1:
+					if list(widget.values())[0].get(list(list(widget.values())[0].keys())[0]) == None: 
+						loger.file_log(text = 'Was found more than one widget. Without legend will be used first item', text_type = 'WARNING')
+						result['widget'] = compared_widgets[0]
+						test_status = True
+					else:
+						result['widget_name'] = self.dash_get_widget_name(widget = next_widget)
+						test_status = True # пропускаем, далее в цикле перебираем легенды и ищем нужную. Тут одно значение, так и должно быть.
+				else:
+					result['widget_name'] = self.dash_get_widget_name(widget = next_widget)
+					result['widget'] = next_widget
+					test_status = True
+				break # выход из перебора типов виджета
+		# получаем весь текст с виджета
+		test_status = True
+		if test_status:
+			# находим первое совпадение и считаем что найденный объект искомый
+			for legend in compared_widgets:
+				displayd_data = legend.text
+				if list(widget.values())[0].get(list(list(widget.values())[0].keys())[0]) != None:
+					# сравниваем легенду и полученную с виджета легенду
+					if str(list(widget.values())[0].get(list(list(widget.values())[0].keys())[0])) in str(displayd_data): # тут возможно нужно преобразовать в строку без пробелов и перевода строки 
+						test_status = True
+						result['widget'] = legend
+						result['widget_name'] = self.dash_get_widget_name(widget = next_widget)
+						break		
+		# ___________________________________________________________________
+		# наводим курсор на название виджета (до появления икогки редактирования виджета)
+		if test_status:
+			test_step_await = self.wait_for_results()
+			while True:
+				test_status = False
+				self.move_cursor_to_the_object(current_object = result.get('widget'))
+				edit_icons = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'id, \'dashboards-page-ul-usualbutton-edit-\'')
+				if type(edit_icons.get('count')) == int:
+					for icon in edit_icons.get('elements'):
+						if len(icon.get_attribute('id').split('-')) == 6:
+							if self.displayed_element(element_definition = icon, timeOut = 0.2).get('state'):
+								edit_icon = icon
+								test_status = True
+								break
+				if test_status:
+					break						
+				if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+					loger.file_log(text = 'Can\'t . Method: {}'.format('dash_delete_widget'), text_type = 'ERROR  ')
+					break	
+		# нажимаем на иконку редактирования виджета (ожидаем открытия формы редактирования виджета + родительский объект)
+		if test_status:
+			test_step_await = self.wait_for_results()
+			self.click_element(element_definition = edit_icon)
+			while True:
+				test_status = False
+				opened_forms = edit_icons = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-ext-comp-\'')
+				if type(opened_forms.get('count')) == int:
+					for opened_form in opened_forms.get('elements'):
+						if len(opened_form.get_attribute('id').split('-')) == 5:
+							parent_object = opened_form
+							test_status = True
+				if test_status:
+					break						
+				if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+					loger.file_log(text = 'Can\'t . Method: {}'.format('dash_delete_widget'), text_type = 'ERROR  ')
+					break	
+		# находим кнопку удаления (от родителя) и нажимаем (ожидаем пока виджет пропадет с дашборда)
+		if test_status:
+			test_step_await = self.wait_for_results()
+			while True:
+				test_status = False
+				delete_btns = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'id, \'dashboards-page-ul-usualbutton-remove-\'')
+				if type(delete_btns.get('count')) == int:
+					for del_btn in delete_btns.get('elements'):
+						if len(del_btn.get_attribute('id').split('-')) == 6:
+							test_status = True # значение кнопки del_btn будем использовать дальше в тесте
+							break				
+				if test_status:
+					break						
+				if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+					loger.file_log(text = 'Can\'t . Method: {}'.format('dash_delete_widget'), text_type = 'ERROR  ')
+					break			
+		if test_status:
+			test_step_await = self.wait_for_results()
+			self.click_element(element_definition = del_btn)
+			while True:
+				test_status = False
+				if widgets_list != self.dash_define_widgets_at_dashboard(time_out = 1):
+					test_status = True
+					loger.file_log(text = "Widget: {}, was deleted".format(result.get('widget_name')), text_type = 'SUCCESS')	
+				if test_status:
+					break						
+				if self.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+					loger.file_log(text = 'Can\'t . Method: {}'.format('dash_delete_widget'), text_type = 'ERROR  ')
+					break	
+		return result
