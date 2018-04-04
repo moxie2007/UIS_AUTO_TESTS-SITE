@@ -12,7 +12,7 @@ class Vats_tools(tools.Uis_tools):
 		self.driver = driver
 
 	def dash_define_existing_dashboards(self, time_out = 120, skip_error_message = False, DEBUG = False):
-	# (C!G)определяем существующие дашборды, возвращаем название, объект, стату(выбран объект или нет)
+	# (C!)определяем существующие дашборды, возвращаем название, объект, стату(выбран объект или нет)
 	# тут надо добавить проверка на видимую кнопку добавить Даш, что б не ждать лишнего, когда нет дашбордов
 		step_await = self.wait_for_results()
 		method_status = False
@@ -290,7 +290,7 @@ class Vats_tools(tools.Uis_tools):
 				sys.exit()
 
 	def dash_define_widgets_at_dashboard(self, time_out = 120):
-	# (СG) метод определяющий общее количество виджетов на дашборде, возвращает созданные не пустые
+	# (С) метод определяющий общее количество виджетов на дашборде, возвращает созданные не пустые
 		method_status = False
 		dashboard_elements = {}
 		dashboard_boxes = 0
@@ -361,7 +361,7 @@ class Vats_tools(tools.Uis_tools):
 		return dashboard_elements
 
 	def dash_get_widget_name(self, widget = None):
-	#(CG) определяем заголовок виджета, в метод нужно передать объект (квадрат самого виджета)
+	#(C) определяем заголовок виджета, в метод нужно передать объект (квадрат самого виджета)
 		result = None
 		# ищем все заголовки с дашборда
 		try:
@@ -376,7 +376,7 @@ class Vats_tools(tools.Uis_tools):
 		return result
 
 	def dash_get_widget_legend(self, widget = None):
-	#(CG) определяем легенду виджета, в метод нужно передать объект (квадрат самого виджета)
+	#(C) определяем легенду виджета, в метод нужно передать объект (квадрат самого виджета)
 	# возвращает или легенду или None
 		result = None
 		# ищем все заголовки с дашборда
@@ -392,7 +392,7 @@ class Vats_tools(tools.Uis_tools):
 		return result
 
 	def dash_get_widget_total(self, widget = None):
-	#(CG) определяем значение Всего в виджете (справа внизу), в метод нужно передать объект (квадрат самого виджета)
+	#(C) определяем значение Всего в виджете (справа внизу), в метод нужно передать объект (квадрат самого виджета)
 	# возвращает или легенду или None
 		result = None
 		# ищем все заголовки с дашборда
@@ -476,7 +476,8 @@ class Vats_tools(tools.Uis_tools):
 		creation_windows = self.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-ext-comp-\'', timeOut = time_out)
 		if type(creation_windows.get('count')) == int:
 			for main_item in creation_windows.get('elements'):
-				if main_item.get_attribute('class') == 'x-window ul-window-no-body-paddings x-layer x-window-ul x-closable x-window-closable x-window-ul-closable x-border-box ul-floating':
+				if len(main_item.get_attribute('id').split('-')) == 6:
+				# if main_item.get_attribute('class') == 'x-window ul-window-no-body-paddings x-layer x-window-ul x-closable x-window-closable x-window-ul-closable x-border-box ul-floating':
 					creation_window = main_item
 					break
 		# определяем какой перед нами тип виджета
@@ -719,7 +720,7 @@ class Vats_tools(tools.Uis_tools):
 		return result
 
 	def dash_creation_widget_from_preset(self, widget_folder = None, widget_name = None, time_out = 120):
-	# (CG)создание виджета через пресеты
+	# (C)создание виджета через пресеты
 		# проверяем что форма создания редактирования виджета есть
 		test_step_await = self.wait_for_results()
 		while True:
@@ -779,7 +780,7 @@ class Vats_tools(tools.Uis_tools):
 					break
 
 	def dash_delete_widget(self, widget = {None:{None:None}}, time_out = 120):
-	# (CG)удаление виджета с дашборда, в метод нужно передать {тип виджета:[{имя виджета:легенда\данные с виджета}]}
+	# (C)удаление виджета с дашборда, в метод нужно передать {тип виджета:[{имя виджета:легенда\данные с виджета}]}
 	# если не все данные указаны то удаляем первый встреченный (тип и имя обязательны для указания)
 		# получаем список всех виджетов со страницы, страница дашборда должна быть открыта и все виджеты уже есть
 		result = {}

@@ -5,7 +5,7 @@ import datetime
 # from datetime import datetime
 import os, sys, codecs, sqlite3, re
 
-import multiprocessing.dummy as multiprocessing
+# import multiprocessing.dummy as multiprocessing
 
 from xml.etree import ElementTree as etree
 
@@ -250,7 +250,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		return current_object.find_element_by_xpath('..')
 	
 	def elements_list(self, object_type = 'div', search_type = 'contains', mask = 'li', timeOut = 10):
-	# (C!)создает список элементов по определенной маске, возвращает количество найденных эллементов и сами элементы в виде готовывых объектов
+	# (C)создает список элементов по определенной маске, возвращает количество найденных эллементов и сами элементы в виде готовывых объектов
 	# хорошо б придумать нормальный выбор между x-path и css selector
 		result = {}
 		# None,[None], None]
@@ -260,8 +260,6 @@ class Uis_tools(start_uis_test.Global_unit):
 		looking_type = []
 		while True:
 			try:
-				# оставлено для дебага
-				# print("//" + str(object_type) + "[" + str(search_type) + "(@" + str(mask) + ")]")
 				elements = driver.find_elements_by_xpath("//" + str(object_type) + "[" + str(search_type) + "(@" + str(mask) + ")]")
 				looking_type.append('x-path')
 			except:
@@ -278,13 +276,11 @@ class Uis_tools(start_uis_test.Global_unit):
 					for el in elements:
 						if el.is_displayed():
 							visible_elements.append(el)
-					# result = [len(visible_elements), visible_elements, looking_type]
 					result = {'count':len(visible_elements), 'elements':visible_elements, 'type':looking_type}
 					break					
 			except:
 				pass
 			if self.wait_for_results (time_data = step_await, time_out = timeOut).get('result'):
-				# time.sleep(1) # надо закоментировать и проверить что работает без этого
 				break				
 		return result
 
@@ -447,7 +443,7 @@ class Uis_tools(start_uis_test.Global_unit):
 				break
 			if len(item_menu) == 0:
 				break
-			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
+			if self.wait_for_results (time_data = step_await, time_out = timeOut).get('result'):
 				self.close_browser
 				loger.file_log(text = 'Can\'t choose your\'s menu item', text_type = 'ERROR  ')
 				break
@@ -459,7 +455,7 @@ class Uis_tools(start_uis_test.Global_unit):
 				loger.file_log(text = 'West menu items switching was done', text_type = 'SUCCESS')
 				method_status = True
 				break
-			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):
+			if self.wait_for_results (time_data = step_await, time_out = timeOut).get('result'):
 				loger.file_log(text = 'Can\'t choose next item  from west menu', text_type = 'ERROR  ')
 				if breakONerror is True:
 					self.close_browser		
@@ -795,12 +791,12 @@ class Uis_tools(start_uis_test.Global_unit):
 		menu_values = {'Аккаунт':1,'Сервисы и Статистика':2, 'Управление пользователями':3, 'Сменить пароль':4, 'Добавить наблюдателя ':5, 'Выйти':6}
 	# определяем какое значение выставлено сейчас
 
-	def login_toLK_by_admin(self, adm_login = 'login', adm_pass = 'pass', user_id = '1103', stend_url = 'url', timeOut = 120, breakONerror = False):
+	def login_toLK_by_admin(self, adm_login = 'login', adm_pass = 'pass', user_id = '1103', stend_url = 'url', timeOut = 120, login_name_for_user = 'Администратор',breakONerror = False):
 	# выполняет логин через админку, не проверяет что логин выполнен
 		method_result = {} # то что будет возвращено по завершение выполнения метода
 		filtering_type = 'ID' # параметр, по которому будет осуществляться фильтрация пользователей (пока это ID)
-		# login_name_for_user = 'Администратор'
-		login_name_for_user = 'Администратор' #пользователь клиента под каторым мы выполняем вход
+		# login_name_for_user = 'Admin for testing'
+		# login_name_for_user = 'Администратор' #пользователь клиента под которым мы выполняем вход
 		method_status = True #статус выполнения метода
 		error_text = 'Can\'t find icon: Clients' #текст для ошибок, которые используются во время ожидания
 		# открываем админку соответствующего стенда

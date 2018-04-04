@@ -19,7 +19,7 @@ import tools, pageElements, start_uis_test, vats_tools
 from loger import Loger as loger
 
 configLK = tools.User_config()
-configLK.set_lk_parametrs(source_name = 'LK')
+configLK.set_lk_parametrs(source_name = 'NEW_LK')
 
 time_out = 10
 test_dashboard_tab = 'list_test'
@@ -90,7 +90,7 @@ if __name__ == '__main__':
 			while True:
 				test_status = False
 				# ищем кнопку для открытия списка и жмем её
-				what_calculate_dd_btns = tools_test.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-cm-treecombo2-metric-\'')
+				what_calculate_dd_btns = tools_test.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-cm-treecombo2-metric_id-\'')
 				if type(what_calculate_dd_btns.get('count')) == int:
 					for metric_dd_btn in what_calculate_dd_btns.get('elements'):
 						if 'trigger-picker' in metric_dd_btn.get_attribute('id'):
@@ -102,7 +102,7 @@ if __name__ == '__main__':
 				if test_status:
 					break						
 				if tools_test.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
-					print('Не удалось найти и нажать кнопку для открытия списка: Что считаем. строка теста{}'.format(101))
+					print('Не удалось найти и нажать кнопку для открытия списка: Что считаем. строка теста{}'.format(105))
 					break
 		# получаем список всех значений: Что считаем
 		metrics_list = {}
@@ -138,6 +138,21 @@ if __name__ == '__main__':
 		if test_status:
 			tools_test.click_element(element_definition = metric_dd_btn, breakONerror = False, scroll_to_element = False, timeOut = time_out)
 # ________________________________________________________________________________________
+		# задаем название виджета
+		test_step_await = tools_test.wait_for_results()
+		while True:
+			test_status = False	
+			widget_names = tools_test.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'dashboards-page-textfield-name-\'')
+			if type(widget_names.get('count')) == int:
+				for widget_name in widget_names.get('elements'):
+					if len(widget_name.get_attribute('id').split('-')) == 6:
+						tools_test.change_value(element_definition = widget_name, text = 'test')
+						test_status = True
+			if test_status:
+				break						
+			if tools_test.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+				print('Значение для: Что считаем, выставить не удалось. строка теста{}'.format(155))
+				break
 		# открываю список и в цикле перебираю объекты: что считаем
 		# метрики
 		for current_metric_key in metrics_list.keys():
@@ -147,7 +162,7 @@ if __name__ == '__main__':
 			test_step_await = tools_test.wait_for_results()
 			while True:
 				test_status = False
-				fildes_value = tools_test.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'dashboards-page-cm-treecombo2-metric-\'')
+				fildes_value = tools_test.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'dashboards-page-cm-treecombo2-metric_id-\'')
 				if type(fildes_value.get('count')) == int:
 					for current_value in fildes_value.get('elements'):
 						if current_value.get_attribute('value') == current_metric_key:
@@ -165,7 +180,7 @@ if __name__ == '__main__':
 				while True:
 					test_status = False
 					# ищем кнопку для открытия списка и жмем её
-					how_calculate_dd_btns = tools_test.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-combobox-agg-\'')
+					how_calculate_dd_btns = tools_test.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-cm-directorycombo-agg-\'')
 					if type(how_calculate_dd_btns.get('count')) == int:
 						for agg_dd_btn in how_calculate_dd_btns.get('elements'):
 							if 'trigger-picker' in agg_dd_btn.get_attribute('id'):
@@ -206,12 +221,18 @@ if __name__ == '__main__':
 			if test_status:
 				for current_agg_key in agg_list.keys():
 					tools_test.click_element(element_definition = agg_dd_btn, breakONerror = False, scroll_to_element = False, timeOut = time_out)
-					tools_test.click_element(element_definition = agg_list.get(current_agg_key), breakONerror = False, scroll_to_element = True, timeOut = time_out)
+					
+					# получаем список всех отображенных значений 
+					list_list = tools_test.elements_list(object_type = 'li', search_type = 'contains', mask = 'data-boundview, \'dashboards-page-ul-boundlist-\'').get('elements')
+					for elem_curent in list_list:
+						if elem_curent.text == current_agg_key:
+							tools_test.click_element(element_definition = elem_curent, breakONerror = False, scroll_to_element = True, timeOut = time_out)
+							break
 					# проверяем, что значение установилось
 					test_step_await = tools_test.wait_for_results()
 					while True:
 						test_status = False
-						fildes_value = tools_test.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'dashboards-page-combobox-agg-\'')
+						fildes_value = tools_test.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'dashboards-page-cm-directorycombo-agg-\'')
 						if type(fildes_value.get('count')) == int:
 							for current_value in fildes_value.get('elements'):
 								if current_value.get_attribute('value') == current_agg_key:
@@ -220,7 +241,7 @@ if __name__ == '__main__':
 						if test_status:
 							break						
 						if tools_test.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
-							print('Не удалось получить выставленное значений из: Как считаем. строка теста{}'.format(219))
+							print('Не удалось получить выставленное значений из: Как считаем. строка теста{}'.format(238))
 							break
 					# получаем список для всех значений: В разрезе чего.
 					# нажимаем на кнопку выпадающего списка: В разрезе чего
@@ -229,7 +250,7 @@ if __name__ == '__main__':
 						while True:
 							test_status = False
 							# ищем кнопку для открытия списка и жмем её
-							dimension_dd_btns = tools_test.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-cm-treecombo2-dimension-\'')
+							dimension_dd_btns = tools_test.elements_list(object_type = 'div', search_type = 'contains', mask = 'id, \'dashboards-page-cm-treecombo2-dimension_id-\'')
 							if type(dimension_dd_btns.get('count')) == int:
 								for dimension_dd_btn in dimension_dd_btns.get('elements'):
 									if 'trigger-picker' in dimension_dd_btn.get_attribute('id'):
@@ -289,7 +310,7 @@ if __name__ == '__main__':
 							test_step_await = tools_test.wait_for_results()
 							while True:
 								test_status = False
-								dimension_fildes_value = tools_test.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'dashboards-page-cm-treecombo2-dimension-\'')
+								dimension_fildes_value = tools_test.elements_list(object_type = 'input', search_type = 'contains', mask = 'id, \'dashboards-page-cm-treecombo2-dimension_id-\'')
 								if type(dimension_fildes_value.get('count')) == int:
 									for current_value in dimension_fildes_value.get('elements'):
 										if current_value.get_attribute('value') == current_dimension_key:
@@ -302,20 +323,21 @@ if __name__ == '__main__':
 									print('Не удалось получить выставленное значений из: В разрезе чего. строка теста{} искомое значение {}'.format(300, current_dimension_key))
 									break
 			# проверяем, что на превью отображено искомок значение. Варианта может быть два: совпадение и 0 - в случае если данных на такой агрегатор нет
-							if test_status:
-								test_step_await = tools_test.wait_for_results()
-								while True:
-									test_status = False
-									displayed_widget_text = va.dash_get_widget_dimension_from_creation_preview().get('dimension_text').lower()
-									if displayed_widget_text in ['0', 'не в разрезе', current_dimension_key.lower()]:
-										if displayed_widget_text in ['0','не в разрезе']:
-											loger.file_log(text = 'Widget without data. You should chek it by hands. Demension: {}'.format(current_dimension_key), text_type = 'WARNING')
-										test_status = True
-									if test_status:
-										break						
-									if tools_test.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
-										print('Не удалось получить выставленное значений из: В разрезе чего. ожидаемое значение:{}, полученное значение: {}'.format(current_dimension_key, displayed_widget_text))
-										break
+							time.sleep(3)
+							# if test_status:
+							# 	test_step_await = tools_test.wait_for_results()
+							# 	while True:
+							# 		test_status = False
+							# 		displayed_widget_text = va.dash_get_widget_dimension_from_creation_preview().get('dimension_text').lower()
+							# 		if displayed_widget_text in ['0', 'не в разрезе', current_dimension_key.lower()]:
+							# 			if displayed_widget_text in ['0','не в разрезе']:
+							# 				loger.file_log(text = 'Widget without data. You should chek it by hands. Demension: {}'.format(current_dimension_key), text_type = 'WARNING')
+							# 			test_status = True
+							# 		if test_status:
+							# 			break						
+							# 		if tools_test.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
+							# 			print('Не удалось получить выставленное значений из: В разрезе чего. ожидаемое значение:{}, полученное значение: {}'.format(current_dimension_key, displayed_widget_text))
+							# 			break
 		# закрываем браузер
 		if test_status:
 			main_unit.close_browser
