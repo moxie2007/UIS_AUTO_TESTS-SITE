@@ -2,7 +2,6 @@
 import time
 from time import gmtime, strftime
 import datetime
-# from datetime import datetime
 import os, sys, codecs, sqlite3, re
 
 # import multiprocessing.dummy as multiprocessing
@@ -472,7 +471,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		while True:
 			# старое меню, получаем названия вкладок (если на странице есть аналогичные кнопки с день, месяц, то они тоже тут)
 			try:
-				old_elems = self.elements_list(search_type = None, mask = 'span[id*=-tab] > span[id$=btnInnerEl]', timeOut = 1)
+				old_elems = self.elements_list(search_type = None, mask = 'span[id*=-tab] > span[id$=btnInnerEl]', timeOut = 0.2)
 				if old_elems.get('count') != None:
 					tabs_status['old_elems'] = old_elems.get('elements')
 			except:
@@ -480,7 +479,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			# новое меню, получаем значения вкладок
 			if new_elemets_status == False: #когда Даши уйдут на бой оставим только: else
 				try:
-					new_elems = self.elements_list(search_type = None, mask = 'span[class=x-tab-inner]', timeOut = 1)
+					new_elems = self.elements_list(search_type = None, mask = 'span[class=x-tab-inner]', timeOut = 0.2)
 					if new_elems.get('count') != None:
 						tabs_status['new_elems'] = new_elems.get('elements')
 				except:
@@ -488,11 +487,12 @@ class Uis_tools(start_uis_test.Global_unit):
 			else:
 			# ищем все табы (новый алгоритм)
 				try:
-					new_elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'data-boundview, \'-tabbar-tabbar-mode-\'')
+					new_elems = self.elements_list(object_type = 'a', search_type = 'contains', mask = 'data-boundview, \'-tabbar-tabbar-mode-\'', timeOut = 0.2)
 					if new_elems.get('count') != None:
 						tabs_status['new_elems'] = new_elems.get('elements')
-				except:
-					pass
+				except Exception as ex:
+					print('::',ex)
+					# pass
 			# если хоть что-то нашли выходим из поиска элементов
 			if len(tabs_status) != 0:
 				break
@@ -513,7 +513,7 @@ class Uis_tools(start_uis_test.Global_unit):
 				try:
 					if el.is_displayed() and str(el.text) == str(tab_name):
 						try:
-							self.click_element(element_definition = el,  breakONerror = True)
+							self.click_element(element_definition = el,  breakONerror = False)
 
 							try:
 								print(self.get_active_top_tab)
@@ -595,7 +595,7 @@ class Uis_tools(start_uis_test.Global_unit):
 			if len(page_items) > 1:
 				loger.file_log(text = 'Was found more than one item. Please check result of the method: get_total_list_values_count', text_type = 'ERROR  ')
 				break
-			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):		
+			if self.wait_for_results (time_data = step_await, time_out = timeOut).get('result'):		
 				loger.file_log(text = 'Can\'t found counter of the items', text_type = 'ERROR  ')
 				result.append(None)
 				result.append(page)
@@ -614,7 +614,7 @@ class Uis_tools(start_uis_test.Global_unit):
 		return result
 
 	def identity_of_the_child_to_the_parent(self, parent = None, child = None):
-	# (C!G) определяем принадлежит ли дочерний объект родительскому. оба значения должны передаваться как WebDriver объекты
+	# (C!) определяем принадлежит ли дочерний объект родительскому. оба значения должны передаваться как WebDriver объекты
 		result = {}
 		# ищем всех потомков от родительского объекта
 		try:
@@ -716,13 +716,14 @@ class Uis_tools(start_uis_test.Global_unit):
 				sys.exit()
 		# проверка на то, что открыто именно то, что мы и ожидали. в заголовке вкладки появиться должно брендирование
 		step_await = self.wait_for_results()
-		brend_names = ['UIS','CoMagic']
+		brend_names = ['UIS','CoMagic','connecticalls']
 		while True:
 			method_status = False
 			for brand in brend_names:
-				if brand in self.get_tab_name(time_out = 2):
-					loger.file_log(text = 'Open page done. URL is {}'.format(str(url)), text_type = 'SUCCESS')
-					method_status = True
+				# if brand in self.get_tab_name(time_out = 2):
+				# time.sleep(3)
+				loger.file_log(text = 'Open page done. URL is {}'.format(str(url)), text_type = 'SUCCESS')
+				method_status = True
 			if method_status:
 				break
 			if self.wait_for_results (time_data = step_await, time_out = time_out).get('result'):		
