@@ -1302,26 +1302,3 @@ class Uis_tools(start_uis_test.Global_unit):
 					break
 			except Exception as ex:
 				peint(ex)
-
-# ______________________________________________________________________________________________
-# (!)обработка личного кабинета - Консультант - Каналы - Обратный звонок
-	def channels_back_call_choose_of_the_schedule(self, graphik_name = None):
-	# (G!С) выбираем график показа виджет обратного звонка/ значение None соответствует любое значение
-	# проверяем что установлено сейчас
-	  # ищем id элемента с текстом: График показа
-		lable_item = self.elements_list(object_type = 'label', search_type = 'contains', mask = 'class, \'x-form-item-label x-form-item-label-ul\'')
-		for index in lable_item.get('elements'):
-			if 'График показа:' == str(index.text):
-				current_id = index.get_attribute('id').split('-')[4]
-				break
-		# определяем, что написано в поле
-		if current_id:
-			print('1')
-			print(self.displayed_element(element_definition =  lk_elements.BUTTON('cons_back_call_schedule_drop_down_btn',mask = current_id), timeOut = 3))
-	# если значение есть то проверяем доступно оно для выбора или нет, если значение нет то выбираем любое
-	# if 
-	# устанавливаем значение
-	# проверяем сменилосьли значение
-	# проверяем активно оно сейчас лили нет и возвращаем это значение.
-
-

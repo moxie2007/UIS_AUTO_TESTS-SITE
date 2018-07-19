@@ -40,7 +40,7 @@ class LK(tools.Uis_tools):
 				for item in elements.get('elements'):
 					# обработка по условию: количество значений в свойстве
 					if element_length != None:
-						print('TEST:  ',len(item.get_attribute(element_length.get('type')).split('-')), '  :  ', element_length.get('length'))
+						# print('TEST:  ',len(item.get_attribute(element_length.get('type')).split('-')), '  :  ', element_length.get('length'))
 						if len(item.get_attribute(element_length.get('type')).split('-')) == int(element_length.get('length')):
 							if debug:
 								loger.file_log(text = 'Найден эллемент на странице, через: длинну свойства тега: {}'.format(search_mask.get('search_type')) , text_type = 'DEBUG  ')
@@ -103,6 +103,9 @@ class LK(tools.Uis_tools):
 		# Показывать в чате
 		if element_definition == 'consultant_show_in_chat_hold_messages':
 			return self.get_object(search_mask = {'main_type':'a', 'search_type': 'contains', 'mask': 'id, \'chat-page-cm-switchbox-chat_retention_is_enabled-\''}, element_length = {'type':'id', 'length':7}, debug = debug, time_out = time_out)
+		# Показывать форму
+		if element_definition == 'consultant_show_form_hold_messages':
+			return self.get_object(search_mask = {'main_type':'a', 'search_type': 'contains', 'mask': 'id, \'chat-page-cm-switchbox-chat_retention_is_alternate_communication_way_enabled-\''}, element_length = {'type':'id', 'length':7}, debug = debug, time_out = time_out)
 		
 	def BUTTON(self, element_definition = None, mask = {}, debug = False, time_out = 0.2):
 	# Консультант - Чат - Оснавные настройки
@@ -223,6 +226,11 @@ class LK(tools.Uis_tools):
 		# Подсказка перед кнопкой: Показывать в чате
 		if element_definition == 'consultant_show_in_chat_hold_messages':
 			return self.get_object(search_mask = {'main_type':'label', 'search_type': 'contains', 'mask': 'id, \'chat-page-cm-switchbox-chat_retention_is_enabled-\''}, additional_parameter = {'type': 'data-ref', 'value': 'labelEl'}, debug = debug, time_out = time_out)
+		# лейбл показа формы перед ВКЛ\ВЫКЛ кнопкой
+		if element_definition == 'consultant_show_form_hold_messages':
+			return self.get_object(search_mask = {'main_type':'label', 'search_type': 'contains', 'mask': 'id, \'chat-page-cm-switchbox-chat_retention_is_alternate_communication_way_enabled-\''}, additional_parameter = {'type': 'data-ref', 'value': 'labelEl'}, debug = debug, time_out = time_out)
+		
+
 		# ----------------------------------------------------------------------------------------
 		# груповые объекты
 		# == Заголовок блока ==
@@ -282,6 +290,16 @@ class LK(tools.Uis_tools):
 		# Поле поле выпадающего списка: E-mail
 		if element_definition == 'consultant_field_dd_email_main_settings':
 			return self.get_object(search_mask = {'main_type':'input', 'search_type': 'contains', 'mask': 'id, \'chat-page-services-oc-chat-personalinfocombo-require_email-\''}, element_length = {'type':'id', 'length':9}, additional_parameter = {'type':'data-ref', 'value': 'inputEl'},debug = debug, time_out = time_out)
+	# Консультант - Чат - Удерживающие сообщения
+		# выбор группы (input, открывающий выпадающий список) 
+		if element_definition == 'consultant_field_dd_form_type_hold_messages':
+			return self.get_object(search_mask = {'main_type':'input', 'search_type': 'contains', 'mask': 'id, \'chat-page-ul-combobox-chat_retention_alternate_communication_way-\''}, element_length = {'type':'id', 'length':7}, additional_parameter = {'type':'data-ref', 'value': 'inputEl'},debug = debug, time_out = time_out)
+		# Поле поле выпадающего списка: через
+		if element_definition == 'consultant_field_dd_through_hold_messages':
+			return self.get_object(search_mask = {'main_type':'input', 'search_type': 'contains', 'mask': 'id, \'chat-page-ul-combobox-chat_retention_alternate_communication_way_timeout-\''}, element_length = {'type':'id', 'length':7}, additional_parameter = {'type':'data-ref', 'value': 'inputEl'},debug = debug, time_out = time_out)
+		
+
+
 
 	def LINK(self, element_definition = None, mask = {}, debug = False, time_out = 0.2):
 	# Консультант - Чат - Распределение обращений по сегментам
@@ -289,3 +307,9 @@ class LK(tools.Uis_tools):
 		if element_definition == 'consultant_segment_distribution_main_settings':
 			return self.get_object(search_mask = {'main_type':'a', 'search_type': 'contains', 'mask': 'id, \'chat-segmenthandlingdistribution-cm-backbutton-back-back-\''}, element_length = {'type':'id', 'length':7},debug = debug, time_out = time_out)
 		
+	def GLOBAL_BLOCK_SECTION(self, element_definition = None, mask = {}, debug = False, time_out = 0.2):
+	# Консультант - Чат - Удерживающие сообщения
+		# блок удерживающего сообщения, общий поиск, потому что разница блока только в динамическом id
+		if element_definition == 'parent_for_consultant_block_hold_messages':
+			return self.get_object(search_mask = {'main_type':'div', 'search_type': 'contains', 'mask': 'id, \'chat-page-services-oc-chat-chatretentionmessagepanel-\''}, element_length = {'type':'id', 'length':7}, search_type = 'all', debug = debug, time_out = time_out)
+	

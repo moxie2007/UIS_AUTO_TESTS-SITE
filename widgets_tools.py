@@ -534,8 +534,6 @@ class Wg_tools(tools.Uis_tools):
 
 
 
-
-
 	@property
 	def sitephone_define_animation_status(self):
 	# (СG)определяем статус выключателя Анимация: True включена, False выключена, считаем что элемент уже есть на странице

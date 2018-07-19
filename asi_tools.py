@@ -18,6 +18,39 @@ class Asi_tools(tools.Uis_tools):
 	# поиск записай на странице выбирает формирует список объектов из элементов в таблице шаблонов ответа, в списке только отображенные на странице элементы
 		return self.elements_list(object_type = 'table', search_type = 'contains', mask = 'id, \'sites-page-tableview-\'')
 
+	def get_parent_obj_by_site_name(self, site_name = None, time_out = 120, skip_error_message = False, DEBUG = False):
+	# ищем родительский объект для строки сайта (в метод нужно передать имя существующего сайта)
+		# ищем  объект с названием заданного сайта
+		step_await = self.wait_for_results()
+		method_status = False
+		result = {}
+		while True:
+			all_elements = self.elements_list(object_type = 'td', search_type = 'contains', mask = 'data-qtip-ownercmp, \'sites-page-cm-namecolumn-domain-\'', timeOut = 1)
+			if type(all_elements.get('count')) == int:
+				for current_element in all_elements.get('elements'):
+					if current_element.text == site_name:
+						result['domain_name_obj'] = current_element
+						method_status = True
+			if method_status:
+				break
+			if self.wait_for_results (time_data = step_await, time_out = (time_out) + 1).get('result'):
+				break
+		# ищем все родительские объекты и если родитель совпадает с искомым сайтом, возвращаем его
+		step_await = self.wait_for_results() 
+		method_status = False
+		while True:
+			all_parents = self.sites_get_site_list
+			if type(all_parents.get('count')) == int:
+				for current_parent in all_parents.get('elements'):
+					if self.identity_of_the_child_to_the_parent(parent = current_parent, child = result.get('domain_name_obj')):
+						result['obj_parent'] = current_element
+						method_status = True
+			if method_status:
+				break
+			if self.wait_for_results (time_data = step_await, time_out = (time_out) + 1).get('result'):
+				break
+		return result
+	
 	def sites_edit_site(self, site_name = None, timeOut = 120):
 		value_parametrs = []
 		list_sites_elements = self.sites_get_site_list
@@ -110,8 +143,8 @@ class Asi_tools(tools.Uis_tools):
 
 
 	def find_login_ppc(self, ac_type = 'yandex.direct'): # 'google.adwords'
-		count_list = []
-		//*[@id="sitesettings-page-tableview-1136-record-17234"]/tbody/tr
-		//*[@id="sitesettings-page-sitemanagement-sitesettings-view-integrationitem-yandex_metrika-1138-innerCt"]
-		//*[@id="sitesettings-page-sitemanagement-sitesettings-view-integrationitem-universal_analytics-1234"]
+		# count_list = []
+		# //*[@id="sitesettings-page-tableview-1136-record-17234"]/tbody/tr
+		# //*[@id="sitesettings-page-sitemanagement-sitesettings-view-integrationitem-yandex_metrika-1138-innerCt"]
+		# //*[@id="sitesettings-page-sitemanagement-sitesettings-view-integrationitem-universal_analytics-1234"]
 		pass
