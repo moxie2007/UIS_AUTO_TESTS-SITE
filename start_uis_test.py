@@ -32,7 +32,7 @@ class Global_unit(object):
 		await asyncio.sleep(int(time_out))
 		return {"time_out":time_out}
 
-	def function_waiter(self, func):
-		def inner(self, *args, **kwargs):
-			function_waiter(*args, **kwargs)
-		return inner
+	# def function_waiter(self, func):
+	# 	def inner(self, *args, **kwargs):
+	# 		function_waiter(*args, **kwargs)
+	# 	return inner

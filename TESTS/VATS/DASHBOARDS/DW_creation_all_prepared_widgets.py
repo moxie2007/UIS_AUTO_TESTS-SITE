@@ -17,11 +17,11 @@ import tools, pageElements, start_uis_test, vats_tools
 from loger import Loger as loger
 
 configLK = tools.User_config()
-configLK.set_lk_parametrs(source_name = 'LK_kuznetsov')
+configLK.set_lk_parametrs(source_name = 'NEW_LK')
 
 test_name = 'Creation widgets by presets'
-time_out = 10
-test_dashboard_tab = 'test_env_dont_touch'
+time_out = 20
+test_dashboard_tab = 'list_test'
 # метод авторизации через админку
 
 # тело теста

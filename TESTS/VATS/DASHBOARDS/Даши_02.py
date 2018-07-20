@@ -19,7 +19,7 @@ import tools, pageElements, start_uis_test, vats_tools
 from loger import Loger as loger
 
 configLK = tools.User_config()
-configLK.set_lk_parametrs(source_name = 'NEW_LK')
+configLK.set_lk_parametrs(source_name = 'US')
 
 time_out = 10
 test_dashboard_tab = 'list_test'
@@ -320,7 +320,7 @@ if __name__ == '__main__':
 								if test_status:
 									break						
 								if tools_test.wait_for_results(time_data = test_step_await, time_out = time_out).get('result'):
-									print('Не удалось получить выставленное значений из: В разрезе чего. строка теста{} искомое значение {}'.format(300, current_dimension_key))
+									print('Не удалось получить выставленное значений из: В разрезе чего. строка теста: {} искомое значение {}'.format(300, current_dimension_key))
 									break
 			# проверяем, что на превью отображено искомок значение. Варианта может быть два: совпадение и 0 - в случае если данных на такой агрегатор нет
 							time.sleep(3)
